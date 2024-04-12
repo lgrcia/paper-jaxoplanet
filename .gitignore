@@ -1,0 +1,38 @@
+# Sankemake temporary
+**/.snakemake
+
+# Miscellaneous
+__pycache__
+*.synctex.gz
+*.ipynb_checkpoints*
+
+# latex
+latex/*
+!latex/paper.tex
+!latex/ms.tex
+!latex/bib.bib
+!latex/ref.bib
+!latex/*.cls
+!latex/*.bst
+!latex/*.pdf
+!latex/cortex.tex
+!latex/gitlinks.tex
+.vscode
+
+# workflows
+# workflows/**/data/**/*.yaml
+# workflows/**/data/**/*.npy
+# workflows/**/data/**/*.pkl
+# workflows/**/data/**/*.fluxes
+# workflows/**/data/**/*.params
+# workflows/**/data/lightcurves
+# workflows/**/data
+# workflows/tess_injection_recovery/figures
+# workflows/**/*.ipynb
+
+# !workflows/tess_injection_recovery/figures/tpfp*.pdf
+# workflows/benchmark2
+# latex/draft*
+# review_*
+
+**/.DS_Store
