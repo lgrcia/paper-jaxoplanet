@@ -1,0 +1,29 @@
+# orders for the figure showing the errors on (r, b)
+error_orders = [20,100,500]
+
+rule flux_starry:
+    output:
+        "data/flux_starry_{N}.npz"
+    script:
+        "scripts/flux_starry.py"
+
+
+rule flux_jaxoplanet:
+    input:
+        "data/flux_starry_{N}.npz"
+    output:
+        "data/flux_jaxoplanet_{N}_{order}.npz"
+    script:
+        "scripts/flux_jaxoplanet.py"
+
+
+rule plot_error_n:
+    input:
+        starry = "data/flux_starry_500.npz",
+        jaxoplanet = [f"data/flux_jaxoplanet_500_{order}.npz" for order in error_orders]
+    output:
+        "figures/error_n.png"
+    params:
+        orders=error_orders
+    script:
+        "scripts/plot_error_n.py"

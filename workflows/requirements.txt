@@ -1,0 +1,4 @@
+jaxoplanet[test,comparison]
+snakemake
+matplotlib
+pulp==2.7.0

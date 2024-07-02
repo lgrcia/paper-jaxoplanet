@@ -59,7 +59,7 @@
 \keywords{}
 
 \begin{abstract}
-    The measurement of stellar fluxes over time serves a wide variety of science cases. Transit and occultation light curves, for example, are used to characterize the orbital parameters of stellar systems, and infer the atmospheric properties of their transiting bodies. Phase curves, on the other hand, can be used to study the thermal emission of exoplanets, and the atmospheric properties of stars. In order to infer these properties, a fast, accurate and robust model of stellar light curves is needed, one that accounts for the non-uniform surface intensity of spherical bodies. The analytical framework known as \texttt{starry} satisfies these requirements, and was successfully applied over the years following its development. However, as datasets and model complexity grow, the tractable inference of these parameters becomes increasingly challenging, and often motivates biased approximations. In this paper, we present a new implementation of the \texttt{starry} framework in \texttt{jax}, a high-performance machine-learning library designed for large-scale computations. We describe the changes made to the original version of \texttt{starry} and evaluate the performance of its new implementation that we release in the open-source Python package \texttt{jaxoplanet}. Through this implementation, we provide the community with a differentiable model of stellar light curves, and enable the use of powerful machine-learning tools available in the \texttt{jax} ecosystem.
+    The measurement of stellar fluxes over time serves a wide variety of science cases. Transit and occultation light curves, for example, are used to characterize the orbital parameters of stellar systems, and infer the atmospheric properties of their transiting bodies. Phase curves, on the other hand, can be used to study the thermal emission of exoplanets, and the atmospheric properties of stars. In order to infer these properties, a fast, accurate and robust model of stellar light curves is needed, one that accounts for the non-uniform surface intensity of spherical bodies and their mutual occultations. The analytical framework known as \texttt{starry} satisfies these requirements, and was successfully applied over the years following its development. However, as datasets and model complexity grow, the tractable inference of these parameters becomes increasingly challenging, and often motivates biased approximations. In this paper, we present a new implementation of the \texttt{starry} framework in \texttt{jax}, a high-performance machine-learning library designed for large-scale computations. We describe the changes made to the original version of \texttt{starry} and evaluate the performance of its new implementation that we release in the open-source Python package \texttt{jaxoplanet}. Through this implementation, we provide the community with a differentiable model of stellar light curves, and enable the use of powerful machine-learning tools available in the \texttt{jax} ecosystem.
 
 \end{abstract}
 
@@ -121,10 +121,44 @@ This way, the complete rotation reduces to the four separate steps shown in \aut
     \end{center}
 \end{figure}
 
-\subsection{Computation of the solution vectors}
+\subsection{Computation of the solution vectors}\label{solution_vectors}
+
 \subsection{Autodiff?}
 
-\section{performance}\label{performances}
+\newpage
+\section{Performance}\label{performances}
+
+As described in \autoref{solution_vectors}, we compute \textit{starry} light curves using the Gauss Legendre quadrature to approximate the $\mathcal{P}$ integral involved in the expression of the solution vector $s_{n}$. Hence, the precision of the computed light curve depends on the order of the Legendre polynomial which defines the number of points used to approximate $\mathcal{P}$. For this reason, users must carefully set the order parameter to reach the precision required for their application, keeping in mind that a higher order leads to a longer computation time. In this section, we evaluate the performance of \texttt{jaxoplanet} against the C++ implementation of \texttt{starry}.\\\\
+\autoref{fig:relative_error_1} shows the relative numerical error in the flux of a linearly limb-darkened star transited by an opaque companion of radius $r$ over a range of impact parameters $b$. Evaluated for different Legendre polynomial orders $n$, this figure shows the decrease of the relative error with the order of the Gauss-Legendre approximation.\\\\
+At a fixed occultor radius, \autoref{fig:relative_error_2} shows the time required to compute the flux of the system for a range of $N$ impact parameters $b$, plotted against the maximum relative error reached, the order $n$ of the Gauss-Legendre approximation, and the hardware used for the computation.
+\begin{figure}[H]
+    \begin{center}
+        \includegraphics[width=\textwidth]{../workflows/performance/relative_error_1.png}
+        \caption{}
+        \label{fig:relative_error_1}
+    \end{center}
+\end{figure}
+\begin{figure}[H]
+    \begin{center}
+        \includegraphics[width=\textwidth]{../workflows/performance/relative_error_2.pdf}
+        \caption{}
+        \label{fig:relative_error_2}
+    \end{center}
+\end{figure}
+These computations were run on an apple M1 CPU and an NVIDIA ... GPU. Thanks to the use of JAX, no harware-specific... \\\\
+
+
+
+By computing $\mathcal{P}$ numerically, we show that our vectorized implementation reaches machine-precision on a GPU, up to an order of magnitude faster than the current C++ implementation of \texttt{starry} ran on a CPU.\\\\
+
+Plot of the precision versus speed of the computed light curves.
+
+Plot of the solution vectors computation similar to figure 11 and 12 of luger (maybe in the appendix)
+
+\subsection{Speed}
+
+
+
 
 \section{Case study: ...}
 
