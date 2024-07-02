@@ -1,6 +1,18 @@
+from tqdm import tqdm
 import starry
 import numpy as np
 import timeit
+
+
+def timeit_f(strf, number=2, repeat=1):
+    times = (
+        np.array(
+            timeit.repeat(f"{strf}", repeat=repeat, number=number, globals=globals())
+        )
+        / number
+    )
+    return np.median(times)
+
 
 starry.config.lazy = False
 
@@ -17,20 +29,12 @@ ro = 0.5
 
 calculated = np.zeros((n, n))
 
-for i, _r in enumerate(r):
+for i, _r in enumerate(tqdm(r)):
     expected = ms.flux(ro=_r, yo=b, xo=0.0, zo=10.0)
     calculated[i, :] = expected
 
 
-def timeit_f(strf, number=100):
-    times = (
-        np.array(timeit.repeat(f"{strf}", number=number, globals=globals()))[1:]
-        / number
-    )
-    return np.median(times), times.std()
-
-
-reference_time = timeit_f(f"ms.flux(ro={ro}, yo=b, xo=0.0, zo=10.0)")[0]
+reference_time = timeit_f(f"ms.flux(ro={ro}, yo=b, xo=0.0, zo=10.0)")
 
 np.savez(
     snakemake.output[0], r=r, b=b, value=calculated, ro=ro, u=u, time=reference_time

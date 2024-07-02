@@ -30,8 +30,8 @@ def colorbar(mappable):
     return cbar
 
 
-fig, axes = plt.subplots(1, len(orders), figsize=(7.5, 2.5))
-norm = colors.LogNorm(vmin=1e-15, vmax=1e-8)
+fig, axes = plt.subplots(1, len(orders), figsize=(8.5, 2.5))
+# norm = colors.LogNorm(vmin=1e-15, vmax=1e-8)
 for i, order in enumerate(orders):
     ax = axes[i]
     ax.set_aspect("equal", "box")
@@ -39,7 +39,7 @@ for i, order in enumerate(orders):
     errors[errors == 0] = 1e-20
     errors[np.logical_not(np.isfinite(errors))] = 1e-20
 
-    # norm = colors.LogNorm(vmin=1e-15, vmax=np.max(np.abs(errors[i])))
+    norm = colors.LogNorm(vmin=1e-15, vmax=np.max(np.abs(errors)))
     pcm = ax.pcolor(R, B, errors.T, norm=norm, cmap="PuBu_r", shading="auto")
     k = dict(color="k", linestyle="-", linewidth=1)
     ax.axline((0, 0), slope=1, **k)
@@ -52,10 +52,10 @@ for i, order in enumerate(orders):
         ax.set_ylabel("b")
     ax.set_xlabel("r")
     ax.set_title(f"$n$ = {order}")
+    colorbar(pcm)
 
 # cm_ax = fig.add_axes([1.5, 0.1, 0.02, 0.8])
 # place colorbar at cm_ax
 
-colorbar(pcm)
 plt.tight_layout()
 plt.savefig(snakemake.output[0], dpi=250)

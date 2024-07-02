@@ -1,5 +1,7 @@
 # orders for the figure showing the errors on (r, b)
 error_orders = [20,100,500]
+time_orders = [20, 40, 60, 100, 200, 350, 500]
+Ns = [100, 500, 1000, 5000, 10000] #50000, 100000]
 
 rule flux_starry:
     output:
@@ -27,3 +29,25 @@ rule plot_error_n:
         orders=error_orders
     script:
         "scripts/plot_error_n.py"
+
+rule plot_time_n:
+    input:
+        starry_1000 = "data/flux_starry_1000.npz",
+        jaxoplanet_1000 = [f"data/flux_jaxoplanet_1000_{order}.npz" for order in time_orders],
+    output:
+        "figures/time_n.pdf"
+    params:
+        orders=time_orders
+    script:
+        "scripts/plot_time_n.py"
+
+rule plot_time_NN:
+    input:
+        starry = [f"data/flux_starry_{N}.npz" for N in Ns],
+        jaxoplanet = [f"data/flux_jaxoplanet_{N}_500.npz" for N in Ns]
+    output:
+        "figures/time_NN.pdf"
+    params:
+        Ns=Ns
+    script:
+        "scripts/plot_time_NN.py"

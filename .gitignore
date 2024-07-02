@@ -37,3 +37,4 @@ latex/*
 
 **/.DS_Store
 dev
+workflows/**/data

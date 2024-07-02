@@ -74,7 +74,7 @@
 % In this paper, we describe an implementation of the starry formalism in jax, allowing for the inference of a large number of parameters on complex models, exploiting the latest dev in ML machinery.
 
 \newpage
-\section{starry}\label{starry}
+\section{starry formalism}\label{starry}
 
 \section{optimization}\label{optimization}
 \subsection{Limb-darkening multiplicative maps}
@@ -123,8 +123,6 @@ This way, the complete rotation reduces to the four separate steps shown in \aut
 
 \subsection{Computation of the solution vectors}\label{solution_vectors}
 
-\subsection{Autodiff?}
-
 \newpage
 \section{Performance}\label{performances}
 
@@ -133,14 +131,14 @@ As described in \autoref{solution_vectors}, we compute \textit{starry} light cur
 At a fixed occultor radius, \autoref{fig:relative_error_2} shows the time required to compute the flux of the system for a range of $N$ impact parameters $b$, plotted against the maximum relative error reached, the order $n$ of the Gauss-Legendre approximation, and the hardware used for the computation.
 \begin{figure}[H]
     \begin{center}
-        \includegraphics[width=\textwidth]{../workflows/performance/relative_error_1.png}
+        \includegraphics[width=\textwidth]{../workflows/performance/figures/error_n.png}
         \caption{}
         \label{fig:relative_error_1}
     \end{center}
 \end{figure}
 \begin{figure}[H]
     \begin{center}
-        \includegraphics[width=\textwidth]{../workflows/performance/relative_error_2.pdf}
+        \includegraphics[width=\textwidth]{../workflows/performance/figures/time_n.pdf}
         \caption{}
         \label{fig:relative_error_2}
     \end{center}
@@ -154,8 +152,6 @@ By computing $\mathcal{P}$ numerically, we show that our vectorized implementati
 Plot of the precision versus speed of the computed light curves.
 
 Plot of the solution vectors computation similar to figure 11 and 12 of luger (maybe in the appendix)
-
-\subsection{Speed}
 
 
 

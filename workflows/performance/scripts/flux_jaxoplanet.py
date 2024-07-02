@@ -1,4 +1,5 @@
 import jax
+from tqdm import tqdm
 
 jax.config.update("jax_platform_name", "cpu")
 jax.config.update("jax_enable_x64", True)
@@ -6,7 +7,6 @@ jax.config.update("jax_enable_x64", True)
 import numpy as np
 from jaxoplanet.experimental.starry import Surface
 import jax.numpy as jnp
-import timeit
 
 data = dict(np.load(snakemake.input[0]))
 order = int(snakemake.wildcards.order)
@@ -14,6 +14,18 @@ u = data["u"]
 surface = Surface(period=None, u=(u))
 
 from jaxoplanet.experimental.starry.light_curves import *
+
+import timeit
+
+
+def timeit_f(strf, number=2, repeat=2):
+    times = (
+        np.array(
+            timeit.repeat(f"{strf}", repeat=repeat, number=number, globals=globals())
+        )[1:]
+        / number
+    )
+    return np.median(times)
 
 
 # TODO: figure out the sparse matrices (and Pijk) to avoid todense()
@@ -103,16 +115,8 @@ expected = data["value"]
 result = np.zeros_like(expected)
 
 
-def timeit_f(strf, number=100):
-    times = (
-        np.array(timeit.repeat(f"{strf}", number=number, globals=globals()))[1:]
-        / number
-    )
-    return np.median(times)
-
-
 def flux(order):
-    for i, _r in enumerate(r):
+    for i, _r in enumerate(tqdm(r)):
         calc = f(surface, _r, 0.0, b, 10.0, 0.0, order)
         result[i, :] = calc
 
