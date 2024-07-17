@@ -4,7 +4,7 @@ import numpy as np
 import timeit
 
 
-def timeit_f(strf, number=2, repeat=1):
+def timeit_f(strf, number=4, repeat=2):
     times = (
         np.array(
             timeit.repeat(f"{strf}", repeat=repeat, number=number, globals=globals())

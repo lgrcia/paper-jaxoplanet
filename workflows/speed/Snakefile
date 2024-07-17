@@ -1,7 +1,18 @@
+import numpy as np
+
 # orders for the figure showing the errors on (r, b)
 error_orders = [20,100,500]
-time_orders = [20, 40, 60, 100, 200, 350, 500]
-Ns = [100, 500, 1000, 5000, 10000] #50000, 100000]
+
+time_orders = (np.ceil(np.exp(np.linspace(np.log(20), np.log(500), 8)) / 10) * 10).astype(int)
+
+# apparently some uneven N lead to I not converging in starry...
+Ns = 2 * np.ceil((10**(np.linspace(2, 4, 8)))/2).astype(int)
+
+rule all:
+    input:
+        "figures/error_rb.png",
+        "figures/error_vs_time.pdf",
+        "figures/points_vs_time.pdf"
 
 rule flux_starry:
     output:
@@ -19,35 +30,35 @@ rule flux_jaxoplanet:
         "scripts/flux_jaxoplanet.py"
 
 
-rule plot_error_n:
+rule plot_error_rb:
     input:
         starry = "data/flux_starry_500.npz",
         jaxoplanet = [f"data/flux_jaxoplanet_500_{order}.npz" for order in error_orders]
     output:
-        "figures/error_n.png"
+        "figures/error_rb.png"
     params:
         orders=error_orders
     script:
-        "scripts/plot_error_n.py"
+        "scripts/plot_error_rb.py"
 
 rule plot_time_n:
     input:
         starry_1000 = "data/flux_starry_1000.npz",
         jaxoplanet_1000 = [f"data/flux_jaxoplanet_1000_{order}.npz" for order in time_orders],
     output:
-        "figures/time_n.pdf"
+        "figures/error_vs_time.pdf"
     params:
         orders=time_orders
     script:
-        "scripts/plot_time_n.py"
+        "scripts/plot_error_vs_time.py"
 
 rule plot_time_NN:
     input:
         starry = [f"data/flux_starry_{N}.npz" for N in Ns],
-        jaxoplanet = [f"data/flux_jaxoplanet_{N}_500.npz" for N in Ns]
+        jaxoplanet = [f"data/flux_jaxoplanet_{N}_200.npz" for N in Ns]
     output:
-        "figures/time_NN.pdf"
+        "figures/points_vs_time.pdf"
     params:
         Ns=Ns
     script:
-        "scripts/plot_time_NN.py"
+        "scripts/plot_points_vs_time.py"

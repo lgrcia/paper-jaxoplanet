@@ -1,0 +1,150 @@
+import numpy as np
+
+l_max = 20
+
+radii = (0.01, 100)
+orders = [20,50,100,150,200,250,300,350,400,450,500]
+
+order_comp_r = (0.01,0.1,1.0,10.,100.)
+order_comp_order = (20,50,100,150,200,250,300,350,400,450,500)
+
+n_max = (l_max + 1) ** 2
+ys = np.eye(n_max, n_max)
+ys[:, 0] = 1.0
+
+rule all:
+    input:
+        "figures/error_jax.pdf",
+        "figures/error_starry.pdf",
+        "figures/error_degree.pdf"
+
+rule numerical:
+    output: "data/numerical_{r}.npz"
+    params:  
+        bs = lambda wildcards, output: b_range(float(wildcards.r))[0],
+        labels = lambda wildcards, output: b_range(float(wildcards.r))[1],
+        l_max = l_max
+    script: "scripts/numerical_s.py"
+
+rule jaxoplanet:
+    output: "data/jax_{r}.npz"
+    params:  
+        bs = lambda wildcards, output: b_range(float(wildcards.r))[0],
+        labels = lambda wildcards, output: b_range(float(wildcards.r))[1],
+        l_max = l_max,
+        order = 500
+    script: "scripts/jaxoplanet_s.py"
+
+
+rule jaxoplanet_order:
+    output: "data/{order}_jax_{r}.npz"
+    params:  
+        bs = lambda wildcards, output: b_range(float(wildcards.r))[0],
+        labels = lambda wildcards, output: b_range(float(wildcards.r))[1],
+        l_max = l_max,
+        order = lambda wildcards, output: int(wildcards.order)
+    script: "scripts/jaxoplanet_s.py"
+
+
+rule starry:
+    output: "data/starry_{r}.npz"
+    params:  
+        bs = lambda wildcards, output: b_range(float(wildcards.r))[0],
+        labels = lambda wildcards, output: b_range(float(wildcards.r))[1],
+        l_max = l_max
+    script: "scripts/starry_s.py"
+
+rule plot:
+    input:
+        ref = [f"data/{{ref}}_{r}.npz" for r in radii],
+        comp = [f"data/{{comp}}_{r}.npz" for r in radii]
+    output: "figures/precision_{comp}_vs_{ref}.pdf"
+    script: "scripts/plot.py"
+
+##################
+
+rule b:
+    output: "data/b_{r}.npz"
+    script: "scripts/make_b.py"
+
+rule num_fs_matrices:
+    # Compute the A1, A2 and rotation matrices for a given l_max
+    output: "data/num_fs_matrices.npz"
+    params: 
+        l_max = l_max
+    script: "scripts/num_fs_matrices.py"
+
+
+rule num_sT:
+    # Compute the solution vector s for a given r and range of b
+    input: "data/b_{r}.npz"
+    output: "data/num_sT_{r}.npz"
+    params:
+        l_max = l_max
+    script: "scripts/num_sT.py"
+
+rule num_fs:
+    # (mpmath) Compute the flux for a given r and range of b, i is the index of 
+    # the spherical harmonic component
+    input: "data/b_{r}.npz", "data/num_fs_matrices.npz", "data/num_sT_{r}.npz"
+    output: "data/num_fs_{r}_{i}.npz"
+    params:
+        l_max = l_max,
+        y = lambda wildcards: ys[int(wildcards.i)]
+    script: "scripts/num_fs.py"
+
+
+rule concatenate_fs:
+    # Concatenate the fluxes and s for all values of i
+    input: 
+        bs = "data/b_{r}.npz", 
+        i = [f"data/num_fs_{{r}}_{i}.npz" for i in range(n_max)],
+        s = "data/num_sT_{r}.npz"
+    output: "results/num_fs_{r}.npz"
+    script: "scripts/concatenate_fs.py"
+
+
+rule jax_fs:
+    # (jax) Compute the flux for a given r and range of b, i is the index of 
+    # the spherical harmonic component
+    input: "data/b_{r}.npz"
+    output: "results/jax_fs_{r}.npz"
+    params:
+        l_max = l_max,
+        order = 500,
+        ys = ys
+    script: "scripts/jax_fs.py"
+
+rule starry_fs:
+    # (starry) Compute the flux for a given r and range of b, i is the index of 
+    # the spherical harmonic component
+    input: "data/b_{r}.npz"
+    output: "results/starry_fs_{r}.npz"
+    params:
+        l_max = l_max,
+        ys = ys
+    script: "scripts/starry_fs.py"
+
+
+rule plot_error:
+    # Plot the error in the flux and s as a function of b and the degree of the spherical harmonic
+    input:
+        ref = [f"results/num_fs_{r}.npz" for r in radii],
+        comp = [f"results/{{code}}_fs_{r}.npz" for r in radii],
+        b = [f"data/b_{r}.npz" for r in radii]
+    params:
+        l_max = l_max
+    output: "figures/error_{code}.pdf"
+    script: "scripts/plot_error.py"
+
+
+rule plot_error_degree:
+    # Plot the error in the flux and s as a function of b and the degree of the spherical harmonic
+    input:
+        jax = [f"results/jax_fs_{r}.npz" for r in radii],
+        num = [f"results/num_fs_{r}.npz" for r in radii],
+        starry = [f"results/starry_fs_{r}.npz" for r in radii]
+    params:
+        l_max = l_max
+    output: "figures/error_degree.pdf"
+    script: "scripts/plot_error_vs_degree.py"

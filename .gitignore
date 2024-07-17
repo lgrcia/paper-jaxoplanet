@@ -38,3 +38,4 @@ latex/*
 **/.DS_Store
 dev
 workflows/**/data
+workflows/precision/results

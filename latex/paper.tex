@@ -10,7 +10,7 @@
 \usepackage{mathtools}
 
 % commands
-\newcommand{\TODO}{\texttt{todo}}
+\newcommand{\todo}[1]{\colorbox{red}{\textcolor{white}{\texttt{TO DO}}}\,}
 \newcommand{\set}[1]{\{\,#1\,\}}
 \newcommand{\footlink}[1]{\footnote{\url{#1}}}
 \DeclareMathOperator*{\argmax}{arg\,max}
@@ -64,6 +64,10 @@
 \end{abstract}
 
 \section*{Introduction}
+
+\begin{equation}\label{eq:starry}
+    f = \bm{s^TARR'y}
+\end{equation}
 
 % the computation of \textit{starry} light curves can be computationally expensive, especially when considering the large number of parameters that need to be inferred from the data. In this paper, we present a new implementation of the \textit{starry} model that leverages the \texttt{jax} library to perform hardware-accelerated computations on GPUs. We show that this implementation can be used to compute light curves up to 100 times faster than the original implementation, and we demonstrate its application to the inference of the orbital parameters of exoplanets from transit light curves.
 
@@ -125,24 +129,43 @@ This way, the complete rotation reduces to the four separate steps shown in \aut
 
 \newpage
 \section{Performance}\label{performances}
+Although \textit{starry} occultation light curves have analytical expressions, their practical implementation relies on numerical approximations chosen to balance precision and computation time. This is the case, for example, of the solution vector $\bm{s}$, computed using numerical series expansions in \texttt{starry} (see \todo{} in \citealt{starry}) and numerical integration in \texttt{jaxoplanet} (see \autoref{solution_vectors}). Other expressions, such as the Wigner-D matrices used in the rotation of the spherical harmonics basis, are computed using reccurence relations prone to the accumulation of numerical errors and instability.\\\\
+In this section, we evaluate the accuracy and speed of the \texttt{jaxoplanet} implementation and compare it with the C++ implementation of \texttt{starry}.
 
-As described in \autoref{solution_vectors}, we compute \textit{starry} light curves using the Gauss Legendre quadrature to approximate the $\mathcal{P}$ integral involved in the expression of the solution vector $s_{n}$. Hence, the precision of the computed light curve depends on the order of the Legendre polynomial which defines the number of points used to approximate $\mathcal{P}$. For this reason, users must carefully set the order parameter to reach the precision required for their application, keeping in mind that a higher order leads to a longer computation time. In this section, we evaluate the performance of \texttt{jaxoplanet} against the C++ implementation of \texttt{starry}.\\\\
-\autoref{fig:relative_error_1} shows the relative numerical error in the flux of a linearly limb-darkened star transited by an opaque companion of radius $r$ over a range of impact parameters $b$. Evaluated for different Legendre polynomial orders $n$, this figure shows the decrease of the relative error with the order of the Gauss-Legendre approximation.\\\\
-At a fixed occultor radius, \autoref{fig:relative_error_2} shows the time required to compute the flux of the system for a range of $N$ impact parameters $b$, plotted against the maximum relative error reached, the order $n$ of the Gauss-Legendre approximation, and the hardware used for the computation.
+\subsection{Precision}
+We evaluate the precision of the \texttt{starry} and \texttt{jaxoplanet} terms against quantities computed at arbitrary precision, using a ground truth version of the code implemented with the \texttt{mpmath} Python library\footlink{https://mpmath.org/}. The precision of the overall flux $f$ can only be understood by considering the precision of the terms involved in \autoref{eq:starry}: the solution vector $\bm{s}$ ($\bm{r}$ if no occultation), the basis matrices $\bm{A}$ and $\bm{B}$, and the Wigner-D rotation tensor $\bm{R}$. Although we show in \todo{add an appendix showing errors for these quantities} that the precision of the \texttt{starry} and \texttt{jaxoplanet} implentations differ for many of these terms, we focus this section on the solution vector $\bm{s}$ and the overall flux $f$.\\\\
+Assuming that we perform the numerical integration of the solution vector $\bm{s}$ at a relatively high order ($n=500$; see \autoref{solution_vectors}), \autoref{fig:precision_s} shows that our reimplentation of \texttt{starry} reaches relative errors lower than 1 part per billion for $\bm{s}$ and the overall flux $f$, considering both a small ($r=0.01$) and a large ($r=100$) occultor transiting the star accross numerically-sensitive values of impact parameters $b$. For reference, \autoref{fig:precision_s_starry} shows comparable errors on the same quantities computed with the C++ implentation of \texttt{starry}. In addition, \autoref{fig:precision_degree} shows the evolution of the error on $f$ for increasing degrees of the spherical harmonics, both for \texttt{starry} and \texttt{jaxoplanet}. With these results, we validate the precision of \texttt{jaxoplanet} ans show it is on per with the legacy C++ \texttt{starry} implentation\footnote{version \todo{add version number of starry}} described in \cite{starry}.\\\\
 \begin{figure}[H]
     \begin{center}
-        \includegraphics[width=\textwidth]{../workflows/performance/figures/error_n.png}
+        \includegraphics[width=\textwidth]{../workflows/precision/figures/error_jax.pdf}
         \caption{}
+        \label{fig:precision_s}
+    \end{center}
+\end{figure}
+\begin{figure}[H]
+    \begin{center}
+        \includegraphics[width=\textwidth]{../workflows/precision/figures/error_degree.pdf}
+        \caption{}
+        \label{fig:precision_degree}
+    \end{center}
+\end{figure}
+As described in \autoref{solution_vectors}, we compute \textit{starry} light curves using the Gauss Legendre quadrature to approximate the $\mathcal{P}$ integral involved in the expression of the solution vector $\bm{s}$. Hence, the precision of the computed flux $f$ depends on the order of the Legendre polynomial which defines the number of points used to approximate $\mathcal{P}$. For this reason, users must carefully set the order parameter to reach the precision required for their application, as shown in \autoref{fig:relative_error_1}.\\\\
+\begin{figure}[H]
+    \begin{center}
+        \includegraphics[width=\textwidth]{../workflows/speed/figures/error_rb.png}
+        \caption{relative numerical error in the flux $f$ of a linearly limb-darkened star transited by an opaque companion over the $(r, b)$ parameter space. The error is evaluated for different orders $n$ of the Gauss-Legendre quadrature and computed against \texttt{starry} for speed and convenience. Note that \autoref{fig:precision_s} was produced using $n=500$ (right plot) for which $\bm{s}$ reaches machine precision.}
         \label{fig:relative_error_1}
     \end{center}
 \end{figure}
-\begin{figure}[H]
-    \begin{center}
-        \includegraphics[width=\textwidth]{../workflows/performance/figures/time_n.pdf}
-        \caption{}
-        \label{fig:relative_error_2}
-    \end{center}
-\end{figure}
+At a fixed occultor radius, \autoref{fig:relative_error_2} shows the time required to compute the flux of the system for a range of $N$ impact parameters $b$, plotted against the maximum relative error reached, the order $n$ of the Gauss-Legendre approximation, and the hardware used for the computation.
+
+% \begin{figure}[H]
+%     \begin{center}
+%         \includegraphics[width=\textwidth]{../workflows/performance/figures/error_vs_time.pdf}
+%         \caption{}
+%         \label{fig:relative_error_2}
+%     \end{center}
+% \end{figure}
 These computations were run on an apple M1 CPU and an NVIDIA ... GPU. Thanks to the use of JAX, no harware-specific... \\\\
 
 
@@ -153,10 +176,22 @@ Plot of the precision versus speed of the computed light curves.
 
 Plot of the solution vectors computation similar to figure 11 and 12 of luger (maybe in the appendix)
 
+\subsection{Speed}\label{speed}
 
 
 
 \section{Case study: ...}
+
+\appendix
+
+\section{Performance}
+\begin{figure}[H]
+    \begin{center}
+        \includegraphics[width=\textwidth]{../workflows/precision/figures/error_starry.pdf}
+        \caption{}
+        \label{fig:precision_s_starry}
+    \end{center}
+\end{figure}
 
 \bibliography{ref}
 

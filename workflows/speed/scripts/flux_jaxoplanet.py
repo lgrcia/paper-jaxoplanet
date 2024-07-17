@@ -18,13 +18,8 @@ from jaxoplanet.experimental.starry.light_curves import *
 import timeit
 
 
-def timeit_f(strf, number=2, repeat=2):
-    times = (
-        np.array(
-            timeit.repeat(f"{strf}", repeat=repeat, number=number, globals=globals())
-        )[1:]
-        / number
-    )
+def timeit_f(strf, n=10):
+    times = np.array(timeit.repeat(f"{strf}", number=n, globals=globals()))[1:] / n
     return np.median(times)
 
 

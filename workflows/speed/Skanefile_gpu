@@ -1,0 +1,26 @@
+import numpy as np
+
+time_orders = (np.ceil(np.exp(np.linspace(np.log(20), np.log(500), 8)) / 10) * 10).astype(int)
+
+# apparently some uneven N lead to I not converging in starry...
+Ns = 2 * np.ceil((10**(np.linspace(2, 4, 8)))/2).astype(int)
+
+rule all:
+    input:
+        [f"data/flux_jaxoplanet_{N}_200.npz" for N in Ns],
+        [f"data/flux_jaxoplanet_1000_{order}.npz" for order in time_orders]
+
+rule flux_starry:
+    output:
+        "data/flux_starry_{N}.npz"
+    script:
+        "scripts/flux_starry.py"
+
+
+rule flux_jaxoplanet:
+    input:
+        "data/flux_starry_{N}.npz"
+    output:
+        "data/flux_jaxoplanet_{N}_{order}.npz"
+    script:
+        "scripts/flux_jaxoplanet.py"

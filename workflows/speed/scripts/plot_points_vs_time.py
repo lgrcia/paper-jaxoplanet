@@ -3,6 +3,7 @@ import numpy as np
 
 
 Ns = snakemake.params.Ns
+
 data = {
     "starry": [np.load(f)["time"] for f in snakemake.input["starry"]],
     "jaxoplanet": [np.load(f)["time"] for f in snakemake.input["jaxoplanet"]],
