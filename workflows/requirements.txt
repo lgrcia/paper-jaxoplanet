@@ -1,4 +1,4 @@
-jaxoplanet[test,comparison]
+git+https://github.com/exoplanet-dev/jaxoplanet.jit@core_paper
 snakemake
 matplotlib
 pulp==2.7.0
