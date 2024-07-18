@@ -148,3 +148,15 @@ rule plot_error_degree:
         l_max = l_max
     output: "figures/error_degree.pdf"
     script: "scripts/plot_error_vs_degree.py"
+
+rule compute_SAR:
+    output: "results/SAR.npz"
+    params:
+        l_max = l_max
+    script: "scripts/SAR_jax_starry.py"
+
+
+rule plot_error_SAR:
+    input: "data/num_fs_matrices.npz", "results/SAR.npz"
+    output: "figures/error_SAR.pdf"
+    script: "scripts/plot_error_SAR.py"

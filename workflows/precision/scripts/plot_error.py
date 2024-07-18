@@ -1,3 +1,8 @@
+# Plot the errors of s, f on each of the (l,m) spherical harmonic components
+# The scaled error is computed in the `errors` function and the error for a
+# given degree l is the maximum error across all m \in [-l, l] components of that degree
+# (indices are for each degree are stored in the `indices` dictionary)
+
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 import numpy as np

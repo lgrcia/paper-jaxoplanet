@@ -67,7 +67,9 @@ fig = plt.figure(figsize=(8, 3))
 x = np.arange(0, l_max + 2, 2)
 
 ax1 = plt.subplot(121)
-ax1.plot(degree, err_per_degree(err["small"]["jax"]), ".-", label="jax", c=j_color)
+ax1.plot(
+    degree, err_per_degree(err["small"]["jax"]), ".-", label="jaxoplanet", c=j_color
+)
 ax1.plot(
     degree, err_per_degree(err["small"]["starry"]), ".-", label="starry", c=s_color
 )
@@ -79,7 +81,9 @@ ax1.set_ylim(1e-17, 1e-5)
 ax1.set_xticks(x)
 
 ax2 = plt.subplot(122)
-ax2.plot(degree, err_per_degree(err["large"]["jax"]), ".-", label="jax", c=j_color)
+ax2.plot(
+    degree, err_per_degree(err["large"]["jax"]), ".-", label="jaxoplanet", c=j_color
+)
 ax2.plot(
     degree, err_per_degree(err["large"]["starry"]), ".-", label="starry", c=s_color
 )

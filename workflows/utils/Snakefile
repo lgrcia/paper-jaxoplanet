@@ -1,0 +1,7 @@
+rule all:
+    input:
+        "data/starry_version.txt"
+
+rule starry_version:
+    output: "data/starry_version.txt"
+    script: "scripts/starry_version.py"
