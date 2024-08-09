@@ -10,7 +10,7 @@ from jaxoplanet.experimental.starry.ylm import Ylm
 from jaxoplanet.experimental.starry.mpcore import mp, utils
 
 ref = "num"
-comp = snakemake.wildcards.code
+comp = "comp"
 
 data = {
     "small": {

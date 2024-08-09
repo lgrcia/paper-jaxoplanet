@@ -73,7 +73,7 @@ ax1.plot(
 ax1.plot(
     degree, err_per_degree(err["small"]["starry"]), ".-", label="starry", c=s_color
 )
-ax1.set_xlabel("degree")
+ax1.set_xlabel("degree of spherical harmonics")
 ax1.set_ylabel("relative error")
 ax1.set_title("$r=0.01$")
 ax1.set_yscale("log")
@@ -88,6 +88,7 @@ ax2.plot(
     degree, err_per_degree(err["large"]["starry"]), ".-", label="starry", c=s_color
 )
 ax2.legend()
+ax2.set_xlabel("degree of spherical harmonics")
 ax2.set_title("$r=100$")
 ax2.set_yscale("log")
 ax2.set_ylim(1e-17, 1e-5)

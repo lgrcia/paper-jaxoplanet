@@ -1,64 +1,132 @@
 import numpy as np
 
-# orders for the figure showing the errors on (r, b)
-error_orders = [20,100,500]
 
-time_orders = (np.ceil(np.exp(np.linspace(np.log(20), np.log(500), 8)) / 10) * 10).astype(int)
+orders = (np.ceil(np.exp(np.linspace(np.log(20), np.log(500), 8)) / 10) * 10).astype(int)
+Ns = np.logspace(2, 5, 8).astype(int)
 
-# apparently some uneven N lead to I not converging in starry...
-Ns = 2 * np.ceil((10**(np.linspace(2, 4, 8)))/2).astype(int)
+radius = 0.1
+u = (1.0,1.0)
 
 rule all:
     input:
-        "figures/error_rb.png",
-        "figures/error_vs_time.pdf",
-        "figures/points_vs_time.pdf"
+        [f"data/flux_starry_quadratic_{N}.npz" for N in Ns],
+        [f"data/flux_exoplanet_quadratic_{N}.npz" for N in Ns],
+        [f"data/flux_jaxoplanet_quadratic_{N}_200.npz" for N in Ns],
 
-rule flux_starry:
+rule flux_starry_quadratic:
     output:
-        "data/flux_starry_{N}.npz"
+        "data/flux_starry_quadratic_{N}.npz"
+    params:
+        radius = radius,
+        u = u
+    script:
+        "scripts/flux_starry.py"
+
+rule flux_starry_l20:
+    output:
+        "data/flux_starry_l20_{N}.npz"
+    params:
+        radius = radius,
+        u = None
     script:
         "scripts/flux_starry.py"
 
 
-rule flux_jaxoplanet:
-    input:
-        "data/flux_starry_{N}.npz"
+rule flux_exoplanet_quadratic:
     output:
-        "data/flux_jaxoplanet_{N}_{order}.npz"
+        "data/flux_exoplanet_quadratic_{N}.npz"
+    params:
+        radius = radius,
+        u = u
+    script:
+        "scripts/flux_exoplanet_quadratic.py"
+
+
+rule flux_jaxoplanet_quadratic:
+    output:
+        "data/flux_jaxoplanet_quadratic_{N}_{order}.npz"
+    params:
+        radius = radius,
+        u = u
     script:
         "scripts/flux_jaxoplanet.py"
 
 
-rule plot_error_rb:
-    input:
-        starry = "data/flux_starry_500.npz",
-        jaxoplanet = [f"data/flux_jaxoplanet_500_{order}.npz" for order in error_orders]
+rule flux_jaxoplanet_l20:
     output:
-        "figures/error_rb.png"
+        "data/flux_jaxoplanet_l20_{N}_{order}.npz"
     params:
-        orders=error_orders
+        radius = radius,
+        u = None
     script:
-        "scripts/plot_error_rb.py"
+        "scripts/flux_jaxoplanet.py"
 
-rule plot_time_n:
+
+rule plot_error_vs_order:
     input:
-        starry_1000 = "data/flux_starry_1000.npz",
-        jaxoplanet_1000 = [f"data/flux_jaxoplanet_1000_{order}.npz" for order in time_orders],
+        starry_quadratic = "data/flux_starry_quadratic_10000.npz",
+        jaxoplanet_quadratic = [f"data/flux_jaxoplanet_quadratic_10000_{order}.npz" for order in orders],
+        jaxoplanet_quadratic_gpu = [f"static/gpu/flux_jaxoplanet_quadratic_10000_{order}.npz" for order in orders],
+        exoplanet_quadratic = "data/flux_exoplanet_quadratic_10000.npz",
+        starry_l20 = "data/flux_starry_l20_10000.npz",
+        jaxoplanet_l20 = [f"data/flux_jaxoplanet_l20_10000_{order}.npz" for order in orders],
+        jaxoplanet_l20_gpu = [f"static/gpu/flux_jaxoplanet_l20_10000_{order}.npz" for order in orders]
     output:
-        "figures/error_vs_time.pdf"
+        "figures/speed_vs_order.pdf"
     params:
-        orders=time_orders
+        orders=orders
     script:
-        "scripts/plot_error_vs_time.py"
+        "scripts/plot_error_vs_order.py"
 
-rule plot_time_NN:
+fixed_order = 200
+
+rule plot_error_vs_N:
     input:
-        starry = [f"data/flux_starry_{N}.npz" for N in Ns],
-        jaxoplanet = [f"data/flux_jaxoplanet_{N}_200.npz" for N in Ns]
+        starry_quadratic = [f"data/flux_starry_quadratic_{N}.npz" for N in Ns],
+        jaxoplanet_quadratic = [f"data/flux_jaxoplanet_quadratic_{N}_{fixed_order}.npz" for N in Ns],
+        # jaxoplanet_quadratic_gpu = [f"static/gpu/flux_jaxoplanet_quadratic_{N}_{fixed_order}.npz" for N in Ns],
+        exoplanet_quadratic = [f"data/flux_exoplanet_quadratic_{N}.npz" for N in Ns],
+        starry_l20 = [f"data/flux_starry_l20_{N}.npz" for N in Ns],
+        jaxoplanet_l20 = [f"data/flux_jaxoplanet_l20_{N}_{fixed_order}.npz" for N in Ns],
+        # jaxoplanet_l20_gpu = [f"static/gpu/flux_jaxoplanet_l20_{N}_{fixed_order}.npz" for N in Ns]
     output:
-        "figures/points_vs_time.pdf"
+        "figures/speed_vs_N.pdf"
     params:
         Ns=Ns
     script:
-        "scripts/plot_points_vs_time.py"
+        "scripts/plot_speed_vs_N.py"
+
+
+
+# rule plot_error_rb:
+#     input:
+#         starry = "data/flux_starry_500.npz",
+#         jaxoplanet = [f"data/flux_jaxoplanet_500_{order}.npz" for order in error_orders]
+#     output:
+#         "figures/error_rb.png"
+#     params:
+#         orders=error_orders
+#     script:
+#         "scripts/plot_error_rb.py"
+
+# rule plot_time_n:
+#     input:
+#         starry_1000 = "data/flux_starry_1000.npz",
+#         jaxoplanet_1000 = [f"data/flux_jaxoplanet_1000_{order}.npz" for order in time_orders],
+#     output:
+#         "figures/error_vs_time.pdf"
+#     params:
+#         orders=time_orders
+#     script:
+#         "scripts/plot_error_vs_time.py"
+
+# rule plot_time_NN:
+#     input:
+#         starry = [f"data/flux_starry_{N}.npz" for N in Ns],
+#         jaxoplanet = [f"data/flux_jaxoplanet_{N}_200.npz" for N in Ns]
+#     output:
+#         "figures/points_vs_time.pdf"
+#     params:
+#         Ns=Ns
+#     script:
+#         "scripts/plot_points_vs_time.py"

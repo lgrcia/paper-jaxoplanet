@@ -1,5 +1,4 @@
-from tqdm import tqdm
-import starry
+from exoplanet.light_curves import LimbDarkLightCurve
 import numpy as np
 import timeit
 
@@ -17,18 +16,8 @@ def timeit_f(strf, n=10):
     return times
 
 
-starry.config.lazy = False
-
-if u is not None:
-    ms = starry.Map(ydeg=len(u), udeg=len(u))
-    ms[1:] = u
-else:
-    l_max = 20
-    ms = starry.Map(ydeg=l_max)
-    y = np.ones((l_max + 1) ** 2)
-    ms[:, :] = y
-
-
-times = timeit_f(f"ms.flux(ro={radius}, yo=b, xo=0.0, zo=10.0)")
+lc_object = LimbDarkLightCurve(*u)
+radii = np.ones_like(b) * radius
+times = timeit_f(f"lc_object._compute_light_curve(b, radii)")
 
 np.savez(snakemake.output[0], time=times, N=N, b=b)

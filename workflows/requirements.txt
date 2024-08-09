@@ -2,3 +2,4 @@ git+https://github.com/exoplanet-dev/jaxoplanet.jit@core_paper
 snakemake
 matplotlib
 pulp==2.7.0
+git+https://github.com/mpmath/mpmath.git

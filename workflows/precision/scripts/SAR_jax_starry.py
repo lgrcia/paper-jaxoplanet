@@ -90,6 +90,8 @@ results = {
     "r": r,
     "sta_A": sta_A,
     "jax_A": jax_A,
+    "jax_A1": jax_A1,
+    "jax_A2": jax_A2,
     "sta_sT": sta_sT,
     "jax_sT": jax_sT,
     "num_sT": num_sT,

@@ -1,3 +1,4 @@
+import numpy as np
 import jax
 
 jax.config.update("jax_enable_x64", True)
@@ -6,8 +7,9 @@ from jaxoplanet.experimental.starry.solution import solution_vector
 from jaxoplanet.experimental.starry.light_curves import *
 import numpy as np
 import jax.numpy as jnp
-from jaxoplanet.experimental.starry.mpcore.solution import rT
-from jaxoplanet.experimental.starry.mpcore.basis import A1, A2_inv
+from jaxoplanet.experimental.starry.solution import rT
+from jaxoplanet.experimental.starry.mpcore.basis import A1
+from jaxoplanet.experimental.starry.basis import A2_inv
 from jaxoplanet.experimental.starry.mpcore.utils import to_numpy
 
 
@@ -23,7 +25,7 @@ def surface_light_curve(
     theta: float = 0.0,
     order: int = 20,
 ):
-    rT_deg = to_numpy(rT(deg))
+    rT_deg = rT(deg)
 
     # occulting body
     if True:
@@ -34,7 +36,8 @@ def surface_light_curve(
         sT = solution_vector(deg, order=order)(b, r)
 
         if deg > 0:
-            A2 = to_numpy(A2_inv(deg) ** -1)
+            A2 = scipy.sparse.linalg.inv(A2_inv(deg))
+            A2 = jax.experimental.sparse.BCOO.from_scipy_sparse(A2)
         else:
             A2 = jnp.array([1])
 
@@ -61,30 +64,35 @@ def jax_flux(deg, order=20, inc=np.pi / 2, obl=0.0):
     return jax.jit(impl)
 
 
+data = np.load(snakemake.input[0])
+b = np.hstack(data["bs"])
+orders = data["orders"]
+ys = snakemake.params.ys
 r = float(snakemake.wildcards.r)
 l_max = snakemake.params.l_max
-bs = np.load(snakemake.input[0], allow_pickle=True)["bs"]
-bs = np.abs(np.concatenate(bs))
-ys = snakemake.params.ys
-order = int(snakemake.wildcards.order)
 
-jax_s_function = jax.jit(
-    jax.vmap(jax.jit(solution_vector(l_max, order)), in_axes=(0, None))
-)
-
-jax_f_function = jax.jit(
-    jax.vmap(jax.jit(jax_flux(l_max, order=order)), in_axes=(None, 0, None, None))
-)
+results = {}
 
 
-jax_f = []
-jax_s = []
+for order in orders:
+    jax_s_function = jax.jit(
+        jax.vmap(jax.jit(solution_vector(l_max, order)), in_axes=(0, None))
+    )
 
-from tqdm import tqdm
+    jax_f_function = jax.jit(
+        jax.vmap(jax.jit(jax_flux(l_max, order=order)), in_axes=(None, 0, None, None))
+    )
 
-for y in tqdm(ys):
-    jax_f.append(jax_f_function(y, bs, r, 0.0))
+    jax_f = []
+    jax_s = []
 
-jax_f = jnp.array(jax_f).T
-jax_s = jax_s_function(bs, r)
-np.savez(snakemake.output[0], f=jax_f, s=jax_s)
+    from tqdm import tqdm
+
+    for y in tqdm(ys):
+        jax_f.append(jax_f_function(y, b, r, 0.0))
+
+    results.update(
+        {f"f_{order}": jnp.array(jax_f).T, f"s_{order}": jax_s_function(b, r)}
+    )
+
+np.savez(snakemake.output[0], **results)
