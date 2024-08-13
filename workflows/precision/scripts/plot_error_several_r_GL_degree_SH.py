@@ -45,7 +45,31 @@ for i, l in enumerate(l_arr):
     (lines[i],) = ax.plot((0, 1), (1e-20, 1e-20), color=cmap(l / (l_max + 2)), lw=2)
 leg = fig.legend(lines, leg_labels, title="Degree")
 
-plt.tight_layout()
+for axis in axes:
+    axis.axhline(1e-6, ls="--", lw=1, color="k", alpha=0.2)
+    axis.axhline(1e-9, ls="--", lw=1, color="k", alpha=0.2)
+
+
+axes[0].annotate(
+    "ppm",
+    xy=(0, 1e-6),
+    xycoords="data",
+    xytext=(3, 3),
+    textcoords="offset points",
+    ha="left",
+    va="bottom",
+    alpha=0.75,
+)
+axes[0].annotate(
+    "ppb",
+    xy=(0, 1e-9),
+    xycoords="data",
+    xytext=(3, 3),
+    textcoords="offset points",
+    ha="left",
+    va="bottom",
+    alpha=0.75,
+)
 
 plt.tight_layout()
 plt.savefig(snakemake.output[0])

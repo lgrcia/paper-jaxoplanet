@@ -18,6 +18,6 @@ def timeit_f(strf, n=10):
 
 lc_object = LimbDarkLightCurve(*u)
 radii = np.ones_like(b) * radius
-times = timeit_f(f"lc_object._compute_light_curve(b, radii)")
+times = timeit_f(f"lc_object._compute_light_curve(b, radii).eval()")
 
 np.savez(snakemake.output[0], time=times, N=N, b=b)

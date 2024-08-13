@@ -15,7 +15,7 @@
 \keywords{}
 
 \begin{abstract}
-    The measurement of stellar fluxes over time serves a wide variety of science cases. Transit and occultation light curves, for example, are used to characterize the orbital parameters of stellar systems, and infer the atmospheric properties of their transiting bodies. Phase curves, on the other hand, can be used to study the thermal emission of exoplanets, and the atmospheric properties of stars. In order to infer these properties, a fast, accurate and robust model of stellar light curves is needed, one that accounts for the non-uniform surface intensity of spherical bodies and their mutual occultations. The analytical framework known as \texttt{starry} satisfies these requirements, and was successfully applied over the years following its development. However, as datasets and model complexity grow, the tractable inference of these parameters becomes increasingly challenging, and often motivates biased approximations. In this paper, we present a new implementation of the \texttt{starry} framework in \texttt{jax}, a high-performance machine-learning library designed for large-scale computations. We describe the changes made to the original version of \texttt{starry} and evaluate the performance of its new implementation that we release in the open-source Python package \texttt{jaxoplanet}. Through this implementation, we provide the community with a differentiable model of stellar light curves, and enable the use of powerful machine-learning tools available in the \texttt{jax} ecosystem. \gitlink{}
+    The measurement of stellar fluxes over time serves a wide variety of science cases. Transit and occultation light curves, for example, are used to characterize the orbital parameters of stellar systems, and infer the atmospheric properties of their transiting bodies. Phase curves, on the other hand, can be used to study the thermal emission of exoplanets, and the atmospheric properties of stars. In order to infer these properties, a fast, accurate and robust model of stellar light curves is needed, one that accounts for the non-uniform surface intensity of spherical bodies and their mutual occultations. The analytical framework known as \textsf{starry} satisfies these requirements, and was successfully applied over the years following its development. However, as datasets and model complexity grow, the tractable inference of these parameters becomes increasingly challenging, and often motivates biased approximations. In this paper, we present a new implementation of the \textsf{starry} framework in \texttt{jax}, a high-performance machine-learning library designed for large-scale computations. We describe the changes made to the original version of \textsf{starry} and evaluate the performance of its new implementation that we release in the open-source Python package \textsf{jaxoplanet}. Through this implementation, we provide the community with a differentiable model of stellar light curves, and enable the use of powerful machine-learning tools available in the \texttt{jax} ecosystem. \gitlink{}
 
 \end{abstract}
 
@@ -52,16 +52,16 @@ With \textit{starry}, every light curve computation at a given time $t$ involves
     \end{center}
 \end{figure}
 
-The rotation of spherical harmonics involves the computation of Wigner-D-matrices, commonly obtained through robust recursion relations in both degree $l$ and order $m$, but leading to costly computations. Hence, knowing how to decompose the full spherical harmonics rotation using pre-computed rotations is essential to achieve optimal performance in the \textit{starry} framework. \autoref{fig:rotation_starry} shows the 6 elementary rotations currently used in the \texttt{starry} implementation.
+The rotation of spherical harmonics involves the computation of Wigner-D-matrices, commonly obtained through robust recursion relations in both degree $l$ and order $m$, but leading to costly computations. Hence, knowing how to decompose the full spherical harmonics rotation using pre-computed rotations is essential to achieve optimal performance in the \textit{starry} framework. \autoref{fig:rotation_starry} shows the 6 elementary rotations currently used in the \textsf{starry} implementation.
 \begin{figure}[H]
     \begin{center}
         \includegraphics[width=\textwidth]{../workflows/rotations/figures/rotation_starry.pdf}
-        \caption{Consecutive rotations of the spherical harmonics basis in the \texttt{starry} implementation. Each schematic shows a sphere rotated from a previous orientation around an axis displayed as a black vector and an angle shown on top.}
+        \caption{Consecutive rotations of the spherical harmonics basis in the \textsf{starry} implementation. Each schematic shows a sphere rotated from a previous orientation around an axis displayed as a black vector and an angle shown on top.}
         \label{fig:rotation_starry}
     \end{center}
 \end{figure}
 In this figure, rotations 1 to 3 correspond to a rotation of the star around its rotation axis, and rotations 3 to 5 place the star on a sky-projected frame. Finally, rotation 6 aligns the spherical harmonics map to the occulting body on the $y$ axis in order to apply Green's theorem in the appropriate basis (Figure 2 from \citealt{starry}). The first thing to notice is that rotations 1 to 3 could be simply reduced to a rotation of angle $\theta$ about the y-axis, turning steps 1 to 3 into one. However, rotations around the pole, i.e.\,with a rotation axis along $z$, have simpler expressions that can be implemented separately. In addition, pre-computing these matrices at lower cost is particularly important for steps 2 and 6, involving a potentially large set of angles $\{\theta\}$ and $\{\theta_z\}$, defined over times $\{t\}$, for which to compute the full light curve. This explains the current decomposition of the complete rotation in six separate steps.\\\\
-In \texttt{jaxoplanet}, we compute the Wigner-D-matrices by employing the Risbo recursion relations \citep{Risbo1996} implemented in \texttt{JAX} as part of the \texttt{s2fft} Python package \citep{price:s2fft}. In addition, we merge rotations 3, 4 and 5 (see \autoref{fig:rotation_jaxoplanet}) into a single compound rotation of axis
+In \textsf{jaxoplanet}, we compute the Wigner-D-matrices by employing the Risbo recursion relations \citep{Risbo1996} implemented in \texttt{JAX} as part of the \texttt{s2fft} Python package \citep{price:s2fft}. In addition, we merge rotations 3, 4 and 5 (see \autoref{fig:rotation_jaxoplanet}) into a single compound rotation of axis
 \begin{equation}
     \bvec{v} = \frac{1}{\sqrt{1 - \cos^2{\left(\frac{inc}{2} \right)} \cos^2{\left(\frac{obl}{2}\right)}}} \begin{pmatrix}
         \sin{\left(\frac{inc}{2} \right)} \cos{\left(\frac{obl}{2}\right)}\\
@@ -71,13 +71,14 @@ In \texttt{jaxoplanet}, we compute the Wigner-D-matrices by employing the Risbo 
 \end{equation}
 and angle
 \begin{equation}
+    \label{eq:combined_angle}
     \omega = 2 \cos^{-1}{\left(\cos{\left(\frac{inc}{2} \right)} \cos{\left(\frac{obl}{2}\right)} \right)}.
 \end{equation}
 This way, the complete rotation reduces to the four separate steps shown in \autoref{fig:rotation_jaxoplanet}.
 \begin{figure}[H]
     \begin{center}
         \includegraphics[width=\textwidth]{../workflows/rotations/figures/rotation_jaxoplanet_1.pdf}
-        \caption{Consecutive rotations of the spherical harmonics basis in the \texttt{jaxoplanet} implementation. Each schematic shows a sphere rotated from a previous orientation around an axis displayed as a black vector and an angle shown on top.}
+        \caption{Consecutive rotations of the spherical harmonics basis in the \textsf{jaxoplanet} implementation. Each schematic shows a sphere rotated from a previous orientation around an axis displayed as a black vector and an angle shown on top.}
         \label{fig:rotation_jaxoplanet}
     \end{center}
 \end{figure}
@@ -86,12 +87,12 @@ This way, the complete rotation reduces to the four separate steps shown in \aut
 
 \newpage
 \section{Performance}\label{performances}
-Although \textit{starry} occultation light curves have analytical expressions, their practical implementation relies on numerical approximations chosen to balance precision and computation time. This is the case, for example, of the solution vector $\bvec{s}$, computed using numerical series expansions in \texttt{starry} (\citealt[section D.2.3]{starry}) and numerical integration in \texttt{jaxoplanet} (see \autoref{solution_vectors}). Other expressions, such as the Wigner-D matrices used in the rotation of the spherical harmonics basis, are computed using reccurence relations prone to the accumulation of numerical errors and instability.\\\\
-In this section, we evaluate the accuracy and speed of the \texttt{jaxoplanet} implementation and compare it with the C++ implementation of \texttt{starry}.
+Although \textit{starry} occultation light curves have analytical expressions, their practical implementation relies on numerical approximations chosen to balance precision and computation time. This is the case, for example, of the solution vector $\bvec{s}$, computed using numerical series expansions in \textsf{starry} (\citealt[section D.2.3]{starry}) and numerical integration in \textsf{jaxoplanet} (see \autoref{solution_vectors}). Other expressions, such as the Wigner-D matrices used in the rotation of the spherical harmonics basis, are computed using reccurence relations prone to the accumulation of numerical errors and instability.\\\\
+In this section, we evaluate the accuracy and speed of the \textsf{jaxoplanet} implementation and compare it with the C++ implementation of \textsf{starry}.
 
 \subsection{Precision}
-We evaluate the precision of the \texttt{starry} and \texttt{jaxoplanet} terms against quantities computed at arbitrary precision, using a ground truth version of the code implemented with the \texttt{mpmath} Python library\footlink{https://mpmath.org/}. The precision of the overall flux $f$ can only be understood by considering the precision of the terms involved in \autoref{eq:starry}: the solution vector $\bvec{s}$ ($\bvec{r}$ if no occultation), the basis matrices $\bvec{A}$ and $\bvec{B}$, and the Wigner-D rotation tensor $\bvec{R}$. Although we show in \autoref{fig:precision_SAR} that the precision of the \texttt{starry} and \texttt{jaxoplanet} implentations differ for many of these terms, we focus this section on the solution vector $\bvec{s}$ and the overall flux $f$.\\\\
-Assuming that we perform the numerical integration of the solution vector $\bvec{s}$ at a relatively high order ($n=500$; see \autoref{solution_vectors}), \autoref{fig:precision_s} shows that our reimplentation of \texttt{starry} reaches relative errors lower than 1 part per billion for $\bvec{s}$ and the overall flux $f$, considering both a small ($r=0.01$) and a large ($r=100$) occultor transiting the star accross numerically-sensitive values of impact parameters $b$. For reference, \autoref{fig:precision_s_starry} shows comparable errors on the same quantities computed with the C++ implentation of \texttt{starry}. In addition, \autoref{fig:precision_degree} shows the evolution of the error on $f$ for increasing degrees of the spherical harmonics, both for \texttt{starry} and \texttt{jaxoplanet}. With these results, we validate the precision of \texttt{jaxoplanet} ans show it is on per with the legacy C++ \texttt{starry} implentation\footnote{version 1.2.0 \citep{starry_120}} described in \cite{starry}.\\\\
+We evaluate the precision of the \textsf{starry} and \textsf{jaxoplanet} terms against quantities computed at arbitrary precision, using a ground truth version of the code implemented with the \texttt{mpmath} Python library\footlink{https://mpmath.org/}. The precision of the overall flux $f$ can only be understood by considering the precision of the terms involved in \autoref{eq:starry}: the solution vector $\bvec{s}$ ($\bvec{r}$ if no occultation), the basis matrices $\bvec{A}$ and $\bvec{B}$, and the Wigner-D rotation tensor $\bvec{R}$. Although we show in \autoref{fig:precision_SAR} that the precision of the \textsf{starry} and \textsf{jaxoplanet} implentations differ for many of these terms, we focus this section on the solution vector $\bvec{s}$ and the overall flux $f$.\\\\
+Assuming that we perform the numerical integration of the solution vector $\bvec{s}$ at a relatively high order ($n=500$; see \autoref{solution_vectors}), \autoref{fig:precision_s} shows that our reimplentation of \textsf{starry} reaches relative errors lower than 1 part per billion for $\bvec{s}$ and the overall flux $f$, considering both a small ($r=0.01$) and a large ($r=100$) occultor transiting the star accross numerically-sensitive values of impact parameters $b$. For reference, \autoref{fig:precision_s_starry} shows comparable errors on the same quantities computed with the C++ implentation of \textsf{starry}. In addition, \autoref{fig:precision_degree} shows the evolution of the error on $f$ for increasing degrees of the spherical harmonics, both for \textsf{starry} and \textsf{jaxoplanet}. With these results, we validate the precision of \textsf{jaxoplanet} ans show it is on per with the legacy C++ \textsf{starry} implentation\footnote{version 1.2.0 \citep{starry_120}} described in \cite{starry}.\\\\
 \begin{figure}[H]
     \begin{center}
         \includegraphics[width=\textwidth]{../workflows/precision/figures/error_jax.pdf}
@@ -119,41 +120,54 @@ As described in \autoref{solution_vectors}, we compute \textit{starry} light cur
 \begin{figure}[H]
     \begin{center}
         \includegraphics[width=\textwidth]{../workflows/precision/figures/br_error.png}
-        \caption{relative numerical error in the flux $f$ of a linearly limb-darkened star (degree $l$=1) transited by an opaque companion over the $(r, b)$ parameter space. The error is evaluated for different orders $n$ of the Gauss-Legendre quadrature and computed against \texttt{starry} for speed and convenience. Note that \autoref{fig:precision_s} was produced using $n=500$ (right plot) for which $\bvec{s}$ reaches machine precision. \codelink{workflows/precision/scripts/plot_br_error}}
+        \caption{relative numerical error in the flux $f$ of a linearly limb-darkened star (degree $l$=1) transited by an opaque companion over the $(r, b)$ parameter space. The error is evaluated for different orders $n$ of the Gauss-Legendre quadrature and computed against \textsf{starry} for speed and convenience. Note that \autoref{fig:precision_s} was produced using $n=500$ (right plot) for which $\bvec{s}$ reaches machine precision. \codelink{workflows/precision/scripts/plot_br_error}}
         \label{fig:relative_error_1}
     \end{center}
 \end{figure}
-In \autoref{fig:error_order_gausslegendre}, we show how the error in the solution vector evolves with the order $n$ of the Gauss-Legendre quadrature, and its impact on the error in the overall flux.
+In \autoref{fig:precision_order_gausslegendre}, we show how the error in the solution vector evolves with the order $n$ of the Gauss-Legendre quadrature, and its impact on the error in the overall flux.
 \begin{figure}[H]
     \begin{center}
         \includegraphics[width=\textwidth]{../workflows/precision/figures/error_order.pdf}
         \caption{Maximum errors in the solution vector and overall flux $f$ for different occultor radii and orders $n$ of the Gauss-Legendre quadrature used to compute the P integral (see \autoref{solution_vectors}). Errors shown in this figure correspond to the maximum values of the scaled errors shown in \autoref{fig:precision_s}, maxima taken over the range of values $b$. As in \autoref{fig:precision_s} the maximum degree of the spherical harmonics basis is set to $l=20$.}
-        \label{fig:error_order_gausslegendre}
+        \label{fig:precision_order_gausslegendre}
     \end{center}
 \end{figure}
-The minimum error is always achieved for higher values of $n$, which comes with higher computational cost (see \autoref{speed}). Hence users must carefully set the order parameter to balance precision and computational speed. As the minimum error reached also depends on the degree of the spherical harmonics basis used, \autoref{fig:error_order_gausslegendre_degree} shows the errors on the flux for each degree of the spherical harmonics basis, for an occultor with relative radii $r=0.01$, $r=1$ and $r=100$.
+The minimum error is always achieved for higher values of $n$, which comes with higher computational cost (see \autoref{speed}). Hence users must carefully set the order parameter to balance precision and computational speed. As the minimum error reached also depends on the degree of the spherical harmonics basis used, \autoref{fig:precision_order_gausslegendre_degree} shows the errors on the flux for each degree of the spherical harmonics basis, for an occultor with relative radii $r=0.01$, $r=1$ and $r=100$.
 \begin{figure}[H]
     \begin{center}
         \includegraphics[width=\textwidth]{../workflows/precision/figures/error_order_degree.pdf}
         \caption{Maximum errors in the overall flux $f$ for all degrees of the spherical harmonics components for different occultor radii and orders $n$ of the Gauss-Legendre quadrature used to compute the P integral (see \autoref{solution_vectors}). Errors shown in this figure correspond to the maximum values of the scaled errors shown in \autoref{fig:precision_s}, maxima taken over the range of values $b$.}
-        \label{fig:error_order_gausslegendre_degree}
+        \label{fig:precision_order_gausslegendre_degree}
     \end{center}
 \end{figure}
 \subsection{Speed}\label{speed}
 
-The main advantage of the \texttt{jax} library is its ability to perform hardware-accelerated computations on CPUs and GPUs. In this section, we evaluate the speed of the \texttt{jaxoplanet} implementation and compare it with the C++ implementation of \texttt{starry}. For quadratically limb-darkened light curve, we also compare our implementation with the one provided by the \textsf{exoplanet} Python package.\\\\
-In \autoref{fig:speed_order_gausslegendre}, we show the evolution of the computing time required to compute an occultation light-curve for a limb-darkened star and a non-uniform star described by spherical harmonics up to order $l=20$. This figure include the value of the order $n$ of the Gauss-Legendre quadrature required to reach a given precision, and illustrate well the trade-off between precision and speed that users must consider when setting the order parameter.\\\\
+One of the advantage of the \texttt{JAX} library is its ability to perform hardware-accelerated computations on CPUs and GPUs. In this section, we evaluate the speed of the \textsf{jaxoplanet} implementation and compare it with the C++ implementation of \textsf{starry}. For quadratically limb-darkened light curve, we also compare our implementation with the one provided by the \textsf{exoplanet} Python package.\\\\
+In \autoref{fig:speed_order_gausslegendre}, we show the evolution of the computing time required to compute an occultation light-curve of a limb-darkened star and that of a non-uniform star described by spherical harmonics with a maximum degrees $l=20$, depending on the order $n$ of the Gauss-Legendre quadrature used to compute the $\mathcal{P}$ integral numerically (see \autoref{solution_vectors}).\\\\
 \begin{figure}[H]
     \begin{center}
         \includegraphics[width=\textwidth]{../workflows/speed/figures/speed_vs_order.pdf}
-        \caption{Computation time of the occultation light curve of a quadts}
+        \caption{Computation time of the occultation light curve of a limb-darkened star (left) and a non-uniform star described by spherical harmonics up to order $l=20$ (right) depending on the order $n$ of the Gauss-Legendre quadrature used to compute the P integral numerically (see \autoref{solution_vectors}). The processing time reported for \textsf{exoplanet} and \textsf{starry} is independent of $n$ as these two codes provide closed-form solutions for the integral $\mathcal{P}$. Light curves are computed for $10\,000$ points in transit and an occultor radius $r=0.1$.}
         \label{fig:speed_order_gausslegendre}
     \end{center}
 \end{figure}
+\begin{figure}[H]
+    \begin{center}
+        \includegraphics[width=\textwidth]{../workflows/speed/figures/speed_vs_N.pdf}
+        \caption{Computation time of the occultation light curve of a limb-darkened star (left) and a non-uniform star described by spherical harmonics up to order $l=20$ (right) depending on the number of points in the light curve. Light curves are computed at order $n=200$ and an occultor radius $r=0.1$.}
+        \label{fig:speed_N}
+    \end{center}
+\end{figure}
+\autoref{fig:speed_order_gausslegendre}, in combination with \autoref{fig:precision_order_gausslegendre_degree}, can be used to determine a value of $n$ balancing precision and computation time.\\\\
+Finally, \autoref{fig:speed_N} shows the evaluation time of \textsf{jaxoplanet} as a function of the number of points in the light curve, compared to \textsf{starry} for an $l=20$ surface map, and \textsf{exoplanet} for a quadratically limb-darkened star. As in the previous figure, we show that \textsf{jaxoplanet} is competitive against state-of-the-art codes on CPUs and offer a clear advantage on GPUs.
 
-\todo{} shows 
 
-\section{Case study: ...}
+
+\section{Case studies: ...}
+
+\subsection{}
+
+\bibliography{ref}
 
 \appendix
 
@@ -169,11 +183,46 @@ In \autoref{fig:speed_order_gausslegendre}, we show the evolution of the computi
 \begin{figure}[H]
     \begin{center}
         \includegraphics[width=\textwidth]{../workflows/precision/figures/error_starry.pdf}
-        \caption{Same as \autoref{fig:precision_s} but with $bvec{s}$ and $f$ computed with the C++ implementation of \texttt{starry}. \codelink{workflows/precision/scripts/plot_error}}
+        \caption{Same as \autoref{fig:precision_s} but with $bvec{s}$ and $f$ computed with the C++ implementation of \textsf{starry}. \codelink{workflows/precision/scripts/plot_error}}
         \label{fig:precision_s_starry}
     \end{center}
 \end{figure}
 
-\bibliography{ref}
+% Table of symbols
+
+\clearpage
+\begin{center}
+\renewcommand*{\arraystretch}{1.08}
+\begin{longtable}{cll}
+\caption{Symbols used in this paper} \label{tab:symbols} \\
+%
+\toprule
+\multicolumn{1}{c}{\textbf{Symbol}} &
+\multicolumn{1}{c}{\textbf{Definition}} &
+\multicolumn{1}{c}{\textbf{Reference}} \\
+\midrule
+\endfirsthead
+%
+\multicolumn{3}{c}%
+{{\bfseries \tablename\ \thetable{} --} continued from previous page} \\
+\toprule
+\multicolumn{1}{c}{\textbf{Symbol}} &
+\multicolumn{1}{c}{\textbf{Definition}} &
+\multicolumn{1}{c}{\textbf{Reference}} \\
+\midrule
+\endhead
+\bottomrule
+%
+\endfoot
+%
+\bottomrule
+\endlastfoot
+%
+$\omega$        & Rotation angle of the combined rotation       & \autoref{eq:combined_angle} \\
+$n$ & order of the Gauss-Legendre approximation & \\
+$r$ & occultor radius in units of occulted body's radius & \\
+%
+\end{longtable}
+\end{center}
 
 \end{document}

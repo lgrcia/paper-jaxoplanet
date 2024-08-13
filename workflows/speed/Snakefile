@@ -9,9 +9,8 @@ u = (1.0,1.0)
 
 rule all:
     input:
-        [f"data/flux_starry_quadratic_{N}.npz" for N in Ns],
-        [f"data/flux_exoplanet_quadratic_{N}.npz" for N in Ns],
-        [f"data/flux_jaxoplanet_quadratic_{N}_200.npz" for N in Ns],
+        "figures/speed_vs_order.pdf",
+        "figures/speed_vs_N.pdf"
 
 rule flux_starry_quadratic:
     output:
@@ -49,7 +48,7 @@ rule flux_jaxoplanet_quadratic:
         radius = radius,
         u = u
     script:
-        "scripts/flux_jaxoplanet.py"
+        "scripts/flux_jaxoplanet_quadratic.py"
 
 
 rule flux_jaxoplanet_l20:
@@ -84,11 +83,11 @@ rule plot_error_vs_N:
     input:
         starry_quadratic = [f"data/flux_starry_quadratic_{N}.npz" for N in Ns],
         jaxoplanet_quadratic = [f"data/flux_jaxoplanet_quadratic_{N}_{fixed_order}.npz" for N in Ns],
-        # jaxoplanet_quadratic_gpu = [f"static/gpu/flux_jaxoplanet_quadratic_{N}_{fixed_order}.npz" for N in Ns],
+        jaxoplanet_quadratic_gpu = [f"static/gpu/flux_jaxoplanet_quadratic_{N}_{fixed_order}.npz" for N in Ns],
         exoplanet_quadratic = [f"data/flux_exoplanet_quadratic_{N}.npz" for N in Ns],
         starry_l20 = [f"data/flux_starry_l20_{N}.npz" for N in Ns],
         jaxoplanet_l20 = [f"data/flux_jaxoplanet_l20_{N}_{fixed_order}.npz" for N in Ns],
-        # jaxoplanet_l20_gpu = [f"static/gpu/flux_jaxoplanet_l20_{N}_{fixed_order}.npz" for N in Ns]
+        jaxoplanet_l20_gpu = [f"static/gpu/flux_jaxoplanet_l20_{N}_{fixed_order}.npz" for N in Ns]
     output:
         "figures/speed_vs_N.pdf"
     params:
