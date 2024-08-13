@@ -1,0 +1,86 @@
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{bm}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{soul}
+\usepackage{mathtools}
+
+% missing figure command
+
+\usepackage{blindtext}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\usepackage{fontawesome}
+\usepackage{booktabs}
+
+\definecolor{linkcolor}{rgb}{0.1216,0.4667,0.7059}
+
+
+\let\StandardIncludeGraphics\includegraphics%
+\renewcommand{\includegraphics}[2][]{%
+\IfFileExists{#2}{%
+  \StandardIncludeGraphics[#1]{#2}%
+}{%
+ \IfFileExists{#2.pdf}{%
+  \StandardIncludeGraphics[#1]{#2}%
+  }{ % No, no .pdf, try *.jpg 
+   \IfFileExists{#2.jpg}{%
+    \StandardIncludeGraphics[#1]{#2}%
+    }{
+      \IfFileExists{#2.png}{%
+      \StandardIncludeGraphics[#1]{#2}%
+      }{%
+      \begin{tcolorbox}[width=6cm,height=4cm,arc=0mm,auto outer arc]
+      \end{tcolorbox}
+     }
+   }
+ }
+}% 
+%
+}
+
+% commands
+\newcommand{\todo}[1]{\colorbox{red}{\textcolor{white}{\texttt{TO DO}}}\,}
+\newcommand{\set}[1]{\{\,#1\,\}}
+\newcommand{\footlink}[1]{\footnote{\url{#1}}}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\let\subsectionautorefname\sectionautorefname
+\let\subsubsectionautorefname\sectionautorefname
+\newcommand{\codeicon}{{\color{linkcolor}\faFileCodeO}}
+\newcommand{\codelink}[1]{\href{https://github.com/lgrcia/paper-jaxoplanet/blob/main/#1.py}{\codeicon}\,\,}
+\newcommand{\gitlink}{\href{https://github.com/lgrcia/paper-jaxoplanet}{\color{linkcolor}\faGithub}\,\,}
+
+
+% no indent
+\setlength\parindent{0pt}
+
+% code style
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{white},
+    commentstyle=\color{gray!70},
+    keywordstyle=\color{Bittersweet},
+    stringstyle=\color{RoyalBlue},
+    basicstyle=\fontsize{8.5}{13}\fontfamily{DejaVuSansMono-TLF}\selectfont,
+    breakatwhitespace=false,         
+    breaklines=true,
+    rulecolor=\color{black!15},
+    numbers=none,
+    numberstyle=\fontsize{7}{11}\fontfamily{DejaVuSansMono-TLF}\selectfont\color{gray!50},
+    framerule=0pt,
+    breakindent=5pt,
+    resetmargins=true,
+    numbersep=10pt,
+    frame=single,
+    aboveskip=1em,
+    belowskip=1em,
+    xleftmargin=6pt,
+    framexleftmargin=4pt
+}
+\lstset{style=mystyle}
+
+\newcommand{\bvec}[1]{{\ensuremath{\mathbf{#1}}}}
