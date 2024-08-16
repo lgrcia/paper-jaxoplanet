@@ -1,7 +1,11 @@
-from tqdm import tqdm
 import starry
 import numpy as np
-import timeit
+from time import time
+import theano
+import theano.tensor as tt
+
+starry.config.lazy = True
+
 
 radius = snakemake.params.radius
 u = snakemake.params.u
@@ -9,15 +13,6 @@ N = int(snakemake.wildcards.N)
 assert radius < 1
 b = np.linspace(0, 1 + radius, N)
 
-
-def timeit_f(strf, n=10):
-    times = np.array(timeit.repeat(f"{strf}", number=n, globals=globals()))[1:] / (
-        n - 1
-    )
-    return times
-
-
-starry.config.lazy = False
 
 if u is not None:
     ms = starry.Map(ydeg=len(u), udeg=len(u))
@@ -29,6 +24,18 @@ else:
     ms[:, :] = y
 
 
-times = timeit_f(f"ms.flux(ro={radius}, yo=b, xo=0.0, zo=10.0)")
+r_ = tt.dscalar()
+b_ = tt.dvector()
+xo_ = tt.dscalar()
+zo_ = tt.dscalar()
+theta_ = tt.dscalar()
+lc_func = theano.function([xo_, b_, zo_, r_], ms.flux(xo=xo_, yo=b_, zo=zo_, ro=r_))
+
+times = []
+
+for _ in range(20):
+    t0 = time()
+    lc_func(0.0, b, 10.0, radius)
+    times.append(time() - t0)
 
 np.savez(snakemake.output[0], time=times, N=N, b=b)

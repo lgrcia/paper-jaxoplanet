@@ -8,6 +8,7 @@ jax_times_quadratic = np.array(
 starry_time_quadratic = np.array(
     [np.median(np.load(f)["time"]) for f in snakemake.input.starry_quadratic]
 )
+
 exoplanet_time_quadratic = np.array(
     [np.median(np.load(f)["time"]) for f in snakemake.input.exoplanet_quadratic]
 )
@@ -32,10 +33,10 @@ import matplotlib.pyplot as plt
 plt.figure(figsize=(8, 3.5))
 
 plt.subplot(121)
-plt.plot(Ns, starry_time_quadratic * 1e3, ".-", label="starry", c="k")
-plt.plot(Ns, exoplanet_time_quadratic * 1e3, ".-", label="exoplanet", c="C4")
+plt.plot(Ns, starry_time_quadratic * 1e3, ".-", label="starry", c="C3")
+plt.plot(Ns, exoplanet_time_quadratic * 1e3, ".-", label="exoplanet", c="k")
 plt.plot(Ns, jax_times_quadratic * 1e3, ".-", label="jaxoplanet (CPU)", c="C0")
-plt.plot(Ns, jax_times_quadratic_gpu * 1e3, ".-", label="jaxoplanet (GPU)", c="C3")
+plt.plot(Ns, jax_times_quadratic_gpu * 1e3, ".--", label="jaxoplanet (GPU)", c="C0")
 plt.legend()
 plt.xlabel("number of points")
 plt.ylabel("time (ms)")
@@ -44,9 +45,9 @@ plt.yscale("log")
 plt.xscale("log")
 
 plt.subplot(122)
-plt.plot(Ns, starry_time_l20 * 1e3, ".-", label="starry", c="k")
+plt.plot(Ns, starry_time_l20 * 1e3, ".-", label="starry", c="C3")
 plt.plot(Ns, jax_times_l20 * 1e3, ".-", label="jaxoplanet (CPU)", c="C0")
-plt.plot(Ns, jax_times_l20_gpu * 1e3, ".-", label="jaxoplanet (GPU)", c="C3")
+plt.plot(Ns, jax_times_l20_gpu * 1e3, ".--", label="jaxoplanet (GPU)", c="C0")
 plt.legend()
 plt.xlabel("number of points")
 plt.title("Non-uniform map ($l=20$)")
