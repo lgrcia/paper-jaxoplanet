@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from jaxoplanet.experimental.starry.mpcore import mp, utils
+from jaxoplanet.experimental.starry.multiprecision import mp, utils
 
 l_max = snakemake.params.l_max
 

@@ -63,7 +63,6 @@ rule concatenate_fs:
     input: 
         bs = "data/b_{r}.npz", 
         i = [f"data/num_fs_{{r}}_{i}.npz" for i in range(n_max)],
-        s = "data/num_sT_{r}.npz"
     output: "results/num_fs_{r}.npz"
     script: "scripts/concatenate_fs.py"
 
@@ -136,6 +135,8 @@ rule plot_error_SAR:
     # Plot the error in the s, A and R matrices of jax and starry compared to mpmath
     input: "data/num_fs_matrices.npz", "results/SAR.npz"
     output: "figures/error_SAR.pdf"
+    params:
+        l_max = l_max
     script: "scripts/plot_error_SAR.py"
 
 rule make_br_dense:

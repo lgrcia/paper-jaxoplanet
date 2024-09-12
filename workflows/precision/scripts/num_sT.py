@@ -1,4 +1,4 @@
-from jaxoplanet.experimental.starry.mpcore.solution import sT
+from jaxoplanet.experimental.starry.multiprecision.solution import sT
 import numpy as np
 from tqdm import tqdm
 

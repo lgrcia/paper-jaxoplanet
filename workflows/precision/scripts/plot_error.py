@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib import gridspec
 import numpy as np
 from jaxoplanet.experimental.starry.ylm import Ylm
-from jaxoplanet.experimental.starry.mpcore import mp, utils
+from jaxoplanet.experimental.starry.multiprecision import mp, utils
 
 ref = "num"
 comp = "comp"
