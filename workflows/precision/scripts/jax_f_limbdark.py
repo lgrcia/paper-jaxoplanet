@@ -31,5 +31,13 @@ function = jax.vmap(
     (None, 0),
 )
 
+# USING LIMB-DARK
+# from jaxoplanet.core.limb_dark import light_curve
+
+# function = jax.vmap(
+#     lambda deg, b: light_curve(u(deg), b, r, order=20) + 1,
+#     (None, 0),
+# )
+
 fluxes = np.array([function(deg, b) for deg in tqdm(range(degree + 1))])
 np.savez(snakemake.output[0], f=fluxes)

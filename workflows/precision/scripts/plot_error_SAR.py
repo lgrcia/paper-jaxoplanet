@@ -4,14 +4,21 @@ jax.config.update("jax_enable_x64", True)
 
 import numpy as np
 from jaxoplanet.experimental.starry.multiprecision import mp
-from jaxoplanet.experimental.starry.multiprecision.utils import diff_mp
+from jaxoplanet.experimental.starry.multiprecision.utils import diff_mp, to_numpy
 
 l_max = snakemake.params.l_max
 
 other_data = np.load(snakemake.input[1], allow_pickle=True)
-jax_A = np.array(other_data["jax_A"])
-sta_A = other_data["sta_A"]
+jax_A1 = np.array(other_data["jax_A1"])
+num_A1 = other_data["num_A1"]
+
+jax_A2 = np.array(other_data["jax_A2"])
+num_A2 = other_data["num_A2"]
+
 num_A = other_data["num_A"]
+sta_A = other_data["sta_A"]
+
+jax_num_A = to_numpy(num_A)
 
 jax_sT = np.array(other_data["jax_sT"])
 sta_sT = other_data["sta_sT"]
@@ -55,10 +62,9 @@ ax.annotate(
 ax.legend()
 
 ax = subplot[1]
-ax.axhline(2e-17, color=jax_color)
-ax.plot(np.abs(diff_mp(num_A, jax_A)).max(0), label="jaxoplanet", color=starry_color)
+ax.plot(np.abs(diff_mp(num_A, jax_num_A)).max(0), label="jaxoplanet", color=jax_color)
 ax.plot(np.abs(diff_mp(num_A, sta_A)).max(0), label="starry", color=starry_color)
-ax.set_title(r"$A$")
+ax.set_title(r"$A_1A_2$")
 ax.set_xlabel("spherical harnonics degree")
 
 ax = subplot[2]
