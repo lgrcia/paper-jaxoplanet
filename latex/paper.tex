@@ -4,7 +4,7 @@
 
 \begin{document}
 
-\title{Hardware-Accelerated Computation of Stellar Light Curves}
+\title{\texttt{jaxoplanet}: Hardware-Accelerated Computation of Stellar Light Curves}
 
 % author info
 \author{Lionel J. Garcia}
@@ -15,7 +15,7 @@
 \keywords{}
 
 \begin{abstract}
-    The measurement of stellar fluxes over time serves a wide variety of science cases. Transit and occultation light curves, for example, are used to characterize the orbital parameters of stellar systems, and infer the atmospheric properties of their transiting bodies. Phase curves, on the other hand, can be used to study the thermal emission of exoplanets, and the atmospheric properties of stars. In order to infer these properties, a fast, accurate and robust model of stellar light curves is needed, one that accounts for the non-uniform surface intensity of spherical bodies and their mutual occultations. The analytical framework known as \textsf{starry} satisfies these requirements, and was successfully applied over the years following its development. However, as datasets and model complexity grow, the tractable inference of these parameters becomes increasingly challenging, and often motivates biased approximations. In this paper, we present a new implementation of the \textsf{starry} framework in \texttt{jax}, a high-performance machine-learning library designed for large-scale computations. We describe the changes made to the original version of \textsf{starry} and evaluate the performance of its new implementation that we release in the open-source Python package \textsf{jaxoplanet}. Through this implementation, we provide the community with a differentiable model of stellar light curves, and enable the use of powerful machine-learning tools available in the \texttt{jax} ecosystem. \gitlink{}
+    The measurement of stellar fluxes over time serves a wide variety of science cases. Transit and occultation light curves, for example, are used to characterize the orbital parameters of stellar systems, and infer the atmospheric properties of their transiting bodies. Phase curves, on the other hand, can be used to study the thermal emission of exoplanets, and the atmospheric circulation of stars. In order to infer these properties, a fast, accurate and robust model of stellar light curves is needed, one that accounts for the non-uniform surface intensity of spherical bodies and their mutual occultations. The analytical framework known as \textsf{starry} satisfies these requirements, and was successfully applied over the years following its development. However, as datasets and model complexity grow, the tractable inference of these parameters becomes increasingly challenging, and often motivates biased approximations. In this paper, we present a new implementation of the \textsf{starry} framework in \texttt{jax}, a high-performance machine-learning library designed for large-scale computations. We describe the changes made to the original version of \textsf{starry} and evaluate the performance of its new implementation that we release in the open-source Python package \textsf{jaxoplanet}. Through this implementation, we provide the community with a differentiable model of stellar light curves, and enable the use of powerful machine-learning tools available in the \texttt{jax} ecosystem. \gitlink{}
 
 \end{abstract}
 
@@ -35,7 +35,41 @@
 % In this paper, we describe an implementation of the starry formalism in jax, allowing for the inference of a large number of parameters on complex models, exploiting the latest dev in ML machinery.
 
 \newpage
-\section{starry formalism}\label{starry}
+\section{Light curve models}\label{starry}
+\subsection{Spherical harmonics}
+
+The surface of a spherical body can be naturally described by spherical harmonics: a set of special functions that can be used as orthonormal basis to represent any spherical surface map. If $\bvec{\tilde y}$ denotes the spherical harmonics basis of degree $l_{max}$ (defined in \citealt[section X]{starry}) and $\bvec{y}$ a vector that contains the coefficients describing the surface in this basis, the intensity $I$ of the map projected onto the sky-projected $(x, y)$ plane of the observer is
+$$I(x, y) = \bvec{\tilde y}^\mathsf{T}(x, y) \, \bvec{y}.$$
+In order to orient this surface, for example with a given inclination, obliquity and phase around its rotation axis, we define a rotation matrix $\bvec{R}$ that acts on the spherical harmonics coefficients $\bvec{y}$, such that the intensity of the map projected onto the sky of the observer is
+$$I(x, y) = \bvec{\tilde y}^\mathsf{T}(x, y) \, \bvec{R} \, \bvec{y}.$$\\
+\subsection{Rotation light curve}
+Using this expression, the integrated intensity of the rotated map is
+$$F = \oiint I(x,y)\,dS = \oiint \bvec{\tilde y}^\mathsf{T}\bvec{R}\bvec{y}\,dS$$
+In order to simplify this integral, \citealt{starry} introduce a change of basis from the spherical harmonics basis $\bvec{\tilde y}$ to a simple polynomial basis $\bvec{\tilde p}$ characterized by the change of basis matrix $\bvec{A_1}$. In this new basis, $\bvec{y}$ can be expressed as
+$$\bvec{p} = \bvec{A_1}\bvec{y}.$$
+Hence, the integrated intensity becomes
+$$F = \bvec{r^\mathsf{T}}\bvec{A_1}\bvec{R}\bvec{y},$$
+with
+$$\bvec{r^\mathsf{T}} \equiv \oiint \mathbf{\tilde{p}}^\top\,dS.$$
+As $\bvec{\tilde{p}}$ is simply made of polynomials of the coordinates $x$, $y$ and $z$, the elements of the \textit{rotation vector} $\bvec{r}$ can be computed analytically and only once for a given map degree $l_{max}$ (see \citealt[Eq. 20]{starry}).\\\\
+\subsection{Occultation light curve}
+The same formalism can be used to compute the integrated intensity of a surface map occulted by another spherical body. In this case, the intensity of the map must be integrated only over the unocculted surface $S$ of the disk, such that 
+$$ F = \oiint_S I(x,y)\,dS = \left(\oiint_S \bvec{\tilde p^\mathsf{T}}\,dS\right)\bvec{A_1}\bvec{R}\bvec{y}.$$
+To simplify this expression, \citealt{pal2012} note that any two-dimensional integral of the unocculted disk can be reduced to a one-dimensional integral over the contour $C$ of the occulting body using Green's theorem\footnote{Also known as Stokes' theorem in three-dimensional vector calculus.}. This can be done if the integrand of the integral over S can be described by a function $f$ such that
+$$f(x, y) = \frac{\delta G_{y}}{\delta x}-\frac{\delta G_{x}}{\delta y},$$
+where $G$ is a vector field defined and differentiable over $S$.\\\\
+By applying a last change of basis matrix $\bvec{A_2}$ to the polynomial basis $\bvec{\tilde p}$, \citealt{starry} transforms $\bvec{\tilde p}$ to a basis $\bvec{\tilde g}$ that satisfies this property, meaning that the surface integral of each of its components $\tilde{g_n}$ can be transformed to the line integral
+$$s_n \equiv \oiint_S \tilde{g_n}(x, y)\,dS = \oint_C \bvec{G}_n(x, y)\,d\bvec{r},$$
+with $\bvec{G}_n$ given in \citealt[Equation 34]{starry}. To simplify the bounds of this integral, the surface map can be aligned with the occulting body through a final rotation matrix $\bvec{R'}.$\\\\
+Using these expressions, the integrated intensity of the occulted map follows the idiomatic linear expression 
+$$F = \bvec{s^\mathsf{T}}\bvec{A}\,\bvec{R'}\,\bvec{R}\,\bvec{y},$$
+with $\bvec{A} = \bvec{A_2A_1}$ and the integrals $s_n$ arranged in the \textit{solution vector} $\bvec{s^\mathsf{T}}$.\\\\
+
+\subsection{Limb-darkened surfaces}
+
+
+
+
 
 \section{optimization}\label{optimization}
 \subsection{Limb-darkening multiplicative maps}
@@ -85,6 +119,79 @@ This way, the complete rotation reduces to the four separate steps shown in \aut
 
 \subsection{Computation of the solution vectors}\label{solution_vectors}
 
+
+
+\begingroup\makeatletter\def\f@size{9}\check@mathfonts
+$$
+    \mbox{\normalsize$\mathcal{P}(\bvec{G}_n)$} =
+    \begin{dcases}
+        %
+        2(2r)^{l+2}\int\displaylimits_{-\kappa/2}^{\kappa/2}
+            (s_\varphi^2 -s_\varphi^4)^{\frac{\mu+4}{4}}
+            (\delta + s_\varphi^2)^{\frac{\nu}{2}}
+            \, \text{d}\varphi
+            %
+            & \qquad \frac{\mu}{2} \, \mathrm{even}
+        \\[1em]
+        %
+        \mathcal{F}\int\displaylimits_{-\kappa/2}^{\kappa/2}
+            (s_\varphi^2-s_\varphi^4)^{\tfrac{l-2}{2}}
+            (k^2- s_\varphi^2)^{\frac{3}{2}}
+            (1-2s_\varphi^2)
+            \, \text{d}\varphi
+            %
+            & \qquad \mu = 1, \,
+                     l \, \mathrm{even}
+        \\[1em]
+        %
+        \mathcal{F}\int\displaylimits_{-\kappa/2}^{\kappa/2}
+            (s_\varphi^2-s_\varphi^4)^{\tfrac{l-3}{2}}
+            (\delta + s_\varphi^2)
+            (k^2- s_\varphi^2)^{\frac{3}{2}}
+            (1-2 s_\varphi^2)
+            \, \text{d}\varphi
+            %
+            & \qquad \mu = 1, \, l \ne 1, \,
+                     l \, \mathrm{odd}
+        \\[1em]
+        %
+        2\mathcal{F}\int\displaylimits_{-\kappa/2}^{\kappa/2}
+            (s_\varphi^2-s_\varphi^4)^{\frac{\mu-1}{4}}
+            (\delta + s_\varphi^2)^{\frac{\nu-1}{2}}
+            (k^2 - s_\varphi^2)^{\frac{3}{2}}
+            \, \text{d}\varphi
+            & \qquad \frac{\mu-1}{2} \, \mathrm{even}, \, l \ne 1
+        \\[1em]
+        %
+        \int\displaylimits_{-\kappa/2}^{\kappa/2}
+        r(r-b\cos{2\varphi})\;\frac{1-z^3}{3(1-z^2)}\text{d}\varphi & \qquad \mu=1, \, l=1
+        \\[1em]
+        %
+        0 & \qquad \mathrm{otherwise},
+    \end{dcases}
+$$
+\endgroup
+
+\begingroup\makeatletter\def\f@size{9}\check@mathfonts
+$$
+    \mbox{\normalsize$s_n$} =
+    \begin{dcases}
+        %
+        \pi - \kappa_1 - r^2\kappa_0 + \textit{A}_{kite} & \qquad n = 0
+        \\[1em]
+        \int\displaylimits_{-\kappa_0/2}^{\kappa_0/2}
+        r(r-b\cos{2\varphi})\;\frac{1-z^3}{3(1-z^2)}\text{d}\varphi - \frac{2}{3}(\kappa_1 - \pi)& \qquad n = 1
+        \\[1em]
+        2s_0 + 4\pi\eta - 2\pi & \qquad n = 2
+        \\[1em]
+        2r(4br)^{\frac{n}{2}}
+        \int\displaylimits_{-\kappa_0/2}^{\kappa_0/2}
+        (k^2 - s_\varphi^2)^{\frac{n}{2}}
+        (r - b + 2bs_\varphi^2) \, \text{d}\varphi & \qquad \mathrm{n\ge3},
+    \end{dcases}
+$$
+\endgroup
+    
 \newpage
 \section{Performance}\label{performances}
 Although \textit{starry} occultation light curves have analytical expressions, their practical implementation relies on numerical approximations chosen to balance precision and computation time. This is the case, for example, of the solution vector $\bvec{s}$, computed using numerical series expansions in \textsf{starry} (\citealt[section D.2.3]{starry}) and numerical integration in \textsf{jaxoplanet} (see \autoref{solution_vectors}). Other expressions, such as the Wigner-D matrices used in the rotation of the spherical harmonics basis, are computed using reccurence relations prone to the accumulation of numerical errors and instability.\\\\
@@ -111,7 +218,7 @@ For reference, \autoref{fig:precision_limbdark} shows the relative error in the 
 \begin{figure}[H]
     \begin{center}
         \includegraphics[width=\textwidth]{../workflows/precision/figures/limbdark_error.PDF}
-        \caption{Maximum errors in the overall flux $f$ of a star occulted by an opaque body for increasing orders of its polynomial limb-darkening law. Errors shown in this figure correspond to the maximum values of the scaled errors shown in \autoref{fig:precision_s}, taken over the range of values $b$. For each order $n$ all limb-darkening coefficients are set to zero except $u_n=1$. \codelink{workflows/precision/scripts/plot_error_limbdark}}
+        \caption{Maximum errors in the overall flux $f$ of a star occulted by an opaque body for increasing orders of its polynomial limb-darkening law. Errors shown in this figure correspond to the maximum values of the scaled errors shown in \autoref{fig:precision_s}, taken over the range of values $b$. For each order $n$ all limb-darkening coefficients are set to zero except the $n$-th coefficient $u_n=1$. \codelink{workflows/precision/scripts/plot_error_limbdark}}
         \label{fig:precision_limbdark}
     \end{center}
 \end{figure}
