@@ -58,7 +58,7 @@ $$ F = \oiint_S I(x,y)\,dS = \left(\oiint_S \bvec{\tilde p^\mathsf{T}}\,dS\right
 To simplify this expression, \citealt{pal2012} note that any two-dimensional integral of the unocculted disk can be reduced to a one-dimensional integral over the contour $C$ of the occulting body using Green's theorem\footnote{Also known as Stokes' theorem in three-dimensional vector calculus.}. This can be done if the integrand of the integral over S can be described by a function $f$ such that
 $$f(x, y) = \frac{\delta G_{y}}{\delta x}-\frac{\delta G_{x}}{\delta y},$$
 where $G$ is a vector field defined and differentiable over $S$.\\\\
-By applying a last change of basis matrix $\bvec{A_2}$ to the polynomial basis $\bvec{\tilde p}$, \citealt{starry} transforms $\bvec{\tilde p}$ to a basis $\bvec{\tilde g}$ that satisfies this property, meaning that the surface integral of each of its components $\tilde{g_n}$ can be transformed to the line integral
+By applying a last change of basis matrix $\bvec{A_2}$ to the polynomial basis $\bvec{\tilde p}$, \citealt{starry} transforms $\bvec{\tilde p}$ to the \textit{Green's basis} $\bvec{\tilde g}$ that satisfies this property, meaning that the surface integral of each of its components $\tilde{g_n}$ can be transformed to the line integral
 $$s_n \equiv \oiint_S \tilde{g_n}(x, y)\,dS = \oint_C \bvec{G}_n(x, y)\,d\bvec{r},$$
 with $\bvec{G}_n$ given in \citealt[Equation 34]{starry}. To simplify the bounds of this integral, the surface map can be aligned with the occulting body through a final rotation matrix $\bvec{R'}.$\\\\
 Using these expressions, the integrated intensity of the occulted map follows the idiomatic linear expression 
@@ -66,8 +66,13 @@ $$F = \bvec{s^\mathsf{T}}\bvec{A}\,\bvec{R'}\,\bvec{R}\,\bvec{y},$$
 with $\bvec{A} = \bvec{A_2A_1}$ and the integrals $s_n$ arranged in the \textit{solution vector} $\bvec{s^\mathsf{T}}$.\\\\
 
 \subsection{Limb-darkened surfaces}
-
-
+We notice that a simpler situation is encountered when the surface of the spherical body can be described by a radial intensity profile $I(r)$, such as a limb-darkened star. In this case, the vector of spherical harmonics coefficients $\bvec{y}$ is very sparse (because all $m\neq0$ components are zero) and the surface map doesn't need to be rotated. Contemporary to \cite{starry}, \cite{Agol2020} explore this case and provide simple expressions for the integrated intensity of a star whose surface can be described by a polynomial limb-darkening law occulted by an opaque body. In this case:
+\begin{enumerate}
+    \item The surface is simply described by $\bvec{u}$, a vector of polynomial limb-darkening coefficients.
+    \item The Green's basis takes a simpler form (see \citealt[Eq. X]{Agol2020}).
+    \item Matrices involved in the computation of the integrated flux have $l_{max}$ columns, versus $(l_{max}+1)^2$ in the general case, reducing drastically the computational cost of the model.
+\end{enumerate}
+For these reasons, and because of its wide application, our implementation treats radially symmetric maps as a separate case.\\\\
 
 
 
