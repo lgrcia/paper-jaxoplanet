@@ -21,10 +21,6 @@
 
 \section*{Introduction}
 
-\begin{equation}\label{eq:starry}
-    f = \bvec{s}^{\boldsymbol{\mathsf{T}}} \bvec{A} \, \bvec{R'} \, \bvec{R} \, \bvec{y}
-\end{equation}
-
 
 % the computation of \textit{starry} light curves can be computationally expensive, especially when considering the large number of parameters that need to be inferred from the data. In this paper, we present a new implementation of the \textit{starry} model that leverages the \texttt{jax} library to perform hardware-accelerated computations on GPUs. We show that this implementation can be used to compute light curves up to 100 times faster than the original implementation, and we demonstrate its application to the inference of the orbital parameters of exoplanets from transit light curves.
 
@@ -36,33 +32,42 @@
 
 \newpage
 \section{Light curve models}\label{starry}
+
+Inspired by the idea of \cite{pal2012}, \cite{starry} and \cite{Agol2020} present a general framework to compute the light curves of spherical bodies with non-uniform surface intensities. This framework, known as \textit{starry}, allows for precise and efficient computation of the light curves of stars and exoplanets, and has been successfully applied to a wide variety of science cases. In this section, we describe the mathematical formalism behind the \textit{starry} model.
+
 \subsection{Spherical harmonics}
 
-The surface of a spherical body can be naturally described by spherical harmonics: a set of special functions that can be used as orthonormal basis to represent any spherical surface map. If $\bvec{\tilde y}$ denotes the spherical harmonics basis of degree $l_{max}$ (defined in \citealt[section X]{starry}) and $\bvec{y}$ a vector that contains the coefficients describing the surface in this basis, the intensity $I$ of the map projected onto the sky-projected $(x, y)$ plane of the observer is
-$$I(x, y) = \bvec{\tilde y}^\mathsf{T}(x, y) \, \bvec{y}.$$
+The surface of a spherical body can be naturally described by spherical harmonics: a set of special functions defined on the sphere that can serve as orthonormal basis to represent any spherical surface map. If $\bvec{\tilde y}$ denotes the spherical harmonics basis of degree $l_{max}$ (defined in \citealt[section X]{starry}) and $\bvec{y}$ a vector that contains the coefficients describing the surface in this basis, the intensity $I$ of the map projected onto the sky-projected $(x, y)$ plane of the observer is
+\begin{equation}I(x, y) = \bvec{\tilde y^\mathsf{T}}(x, y) \, \bvec{y}.\end{equation}
 In order to orient this surface, for example with a given inclination, obliquity and phase around its rotation axis, we define a rotation matrix $\bvec{R}$ that acts on the spherical harmonics coefficients $\bvec{y}$, such that the intensity of the map projected onto the sky of the observer is
-$$I(x, y) = \bvec{\tilde y}^\mathsf{T}(x, y) \, \bvec{R} \, \bvec{y}.$$\\
+\begin{equation}I(x, y) = \bvec{\tilde y}^\mathsf{T}(x, y) \, \bvec{R} \, \bvec{y}.\end{equation}\\
 \subsection{Rotation light curve}
 Using this expression, the integrated intensity of the rotated map is
-$$F = \oiint I(x,y)\,dS = \oiint \bvec{\tilde y}^\mathsf{T}\bvec{R}\bvec{y}\,dS$$
+\begin{equation}F = \iint I(x,y)\,\text{d}S = \iint \bvec{\tilde y^\mathsf{T}}\bvec{R}\bvec{y}\,\text{d}S\end{equation}
 In order to simplify this integral, \citealt{starry} introduce a change of basis from the spherical harmonics basis $\bvec{\tilde y}$ to a simple polynomial basis $\bvec{\tilde p}$ characterized by the change of basis matrix $\bvec{A_1}$. In this new basis, $\bvec{y}$ can be expressed as
-$$\bvec{p} = \bvec{A_1}\bvec{y}.$$
-Hence, the integrated intensity becomes
-$$F = \bvec{r^\mathsf{T}}\bvec{A_1}\bvec{R}\bvec{y},$$
+\begin{equation}\bvec{p} = \bvec{A_1}\bvec{y},\end{equation}
+such that 
+\begin{equation}I(x, y) = \bvec{\tilde p^\mathsf{T}}(x, y)\,\bvec{A_1}\bvec{R}\bvec{y}.\end{equation}
+Hence,
+\begin{equation}F = \iint \bvec{\tilde p^\mathsf{T}}\bvec{A_1}\bvec{R}\bvec{y}\,\text{d}S = \bvec{r^\mathsf{T}}\bvec{A_1}\bvec{R}\bvec{y},\end{equation}
 with
-$$\bvec{r^\mathsf{T}} \equiv \oiint \mathbf{\tilde{p}}^\top\,dS.$$
-As $\bvec{\tilde{p}}$ is simply made of polynomials of the coordinates $x$, $y$ and $z$, the elements of the \textit{rotation vector} $\bvec{r}$ can be computed analytically and only once for a given map degree $l_{max}$ (see \citealt[Eq. 20]{starry}).\\\\
+\begin{equation}\bvec{r^\mathsf{T}} \equiv \iint \mathbf{\tilde{p}}^\top\,\text{d}S,\end{equation}
+since $\bvec{A_1}$, $\bvec{R}$ and $\bvec{y}$ are independent of the coordinates on the sphere.\\\\
+As $\bvec{\tilde{p}}$ is simply made of polynomials of the coordinates $x$, $y$ and $z$, the elements of the \textit{rotation vector} $\bvec{r}$ can be computed analytically and only once for a given $l_{max}$ (see \citealt[Eq. 20]{starry}).\\\\
 \subsection{Occultation light curve}
 The same formalism can be used to compute the integrated intensity of a surface map occulted by another spherical body. In this case, the intensity of the map must be integrated only over the unocculted surface $S$ of the disk, such that 
-$$ F = \oiint_S I(x,y)\,dS = \left(\oiint_S \bvec{\tilde p^\mathsf{T}}\,dS\right)\bvec{A_1}\bvec{R}\bvec{y}.$$
+\begin{equation} F = \iint_S I(x,y)\,\text{d}S = \left(\iint_S \bvec{\tilde p^\mathsf{T}}\,\text{d}S\right)\bvec{A_1}\bvec{R}\bvec{y}.\end{equation}
 To simplify this expression, \citealt{pal2012} note that any two-dimensional integral of the unocculted disk can be reduced to a one-dimensional integral over the contour $C$ of the occulting body using Green's theorem\footnote{Also known as Stokes' theorem in three-dimensional vector calculus.}. This can be done if the integrand of the integral over S can be described by a function $f$ such that
-$$f(x, y) = \frac{\delta G_{y}}{\delta x}-\frac{\delta G_{x}}{\delta y},$$
+\begin{equation}f(x, y) = \frac{\delta G_{y}}{\delta x}-\frac{\delta G_{x}}{\delta y},\end{equation}
 where $G$ is a vector field defined and differentiable over $S$.\\\\
-By applying a last change of basis matrix $\bvec{A_2}$ to the polynomial basis $\bvec{\tilde p}$, \citealt{starry} transforms $\bvec{\tilde p}$ to the \textit{Green's basis} $\bvec{\tilde g}$ that satisfies this property, meaning that the surface integral of each of its components $\tilde{g_n}$ can be transformed to the line integral
-$$s_n \equiv \oiint_S \tilde{g_n}(x, y)\,dS = \oint_C \bvec{G}_n(x, y)\,d\bvec{r},$$
-with $\bvec{G}_n$ given in \citealt[Equation 34]{starry}. To simplify the bounds of this integral, the surface map can be aligned with the occulting body through a final rotation matrix $\bvec{R'}.$\\\\
+By applying a last change of basis matrix $\bvec{A_2}$ to the polynomial basis $\bvec{\tilde p}$, \citealt{starry} transforms $\bvec{\tilde p}$ to the \textit{Green's basis} $\bm{\tilde g}$ that satisfies this property, meaning that the surface integral of each of its components $\tilde{g_n}$ can be transformed to the line integral
+\begin{equation}
+    \label{eq:sn_gn}
+    s_n \equiv \iint_S \tilde{g_n}(x, y)\,\text{d}S = \oint_C \bvec{G}_n(x, y)\,\text{d}\bvec{r},
+\end{equation}
+with $\bvec{G}_n$ given in \citealt[Equation 34]{starry}. These functions require the occulting body to be aligned with the $y$-axis of the reference frame, which can be achieved by applying a final rotation matrix $\bvec{R'}$ to the surface map.\\\\
 Using these expressions, the integrated intensity of the occulted map follows the idiomatic linear expression 
-$$F = \bvec{s^\mathsf{T}}\bvec{A}\,\bvec{R'}\,\bvec{R}\,\bvec{y},$$
+\begin{equation}F = \bvec{s^\mathsf{T}}\bvec{A}\,\bvec{R'}\,\bvec{R}\,\bvec{y},\end{equation}
 with $\bvec{A} = \bvec{A_2A_1}$ and the integrals $s_n$ arranged in the \textit{solution vector} $\bvec{s^\mathsf{T}}$.\\\\
 
 \subsection{Limb-darkened surfaces}
@@ -72,11 +77,11 @@ We notice that a simpler situation is encountered when the surface of the spheri
     \item The Green's basis takes a simpler form (see \citealt[Eq. X]{Agol2020}).
     \item Matrices involved in the computation of the integrated flux have $l_{max}$ columns, versus $(l_{max}+1)^2$ in the general case, reducing drastically the computational cost of the model.
 \end{enumerate}
-For these reasons, and because of its wide application, our implementation treats radially symmetric maps as a separate case.\\\\
+For these reasons, and because of its wide application, our implementation treats radially-symmetric maps separately, leading to highly optimize computations of limb-darkened light curves.\\\\
 
 
-
-\section{optimization}\label{optimization}
+\newpage
+\section{Implementation details}\label{optimization}
 \subsection{Limb-darkening multiplicative maps}
 \subsection{Spherical harmonics rotations}
 
@@ -124,6 +129,18 @@ This way, the complete rotation reduces to the four separate steps shown in \aut
 
 \subsection{Computation of the solution vectors}\label{solution_vectors}
 
+In the general case, we described in \ref{model_occultation} how the integrated intensity of a spherical body occulted by another can be computed using the solution vector $\bvec{s}$. \cite{pal2012} shows that, knowing $\bvec{G}_n$, \autoref{eq:sn_gn} can be decomposed into
+\begin{equation}
+    s_n = \mathcal{Q}(\bvec{G}_n) - \mathcal{P}(\bvec{G}_n)
+\end{equation}
+where $\mathcal{Q}(\bvec{G}_n)$ and $\mathcal{P}(\bvec{G}_n)$ are line integrals over the contour of the occulting body parametrized by the angle $\varphi$ shown in \autoref{}\\\\
+
+
+\begin{itemize}
+    \item $\mathcal{Q}(\bvec{G}_n)$ is given by \citealt{starry} (Equation D28-29) in the general case, and is conveniently equal to $0$ for all $n > 0$ in the polynomial limb-darkening case.
+    \item $\mathcal{P}(\bvec{G}_n)$ is given by \citealt{starry} (Equation D32), for the general case, and by \citealt{Agol2020} (Equation 71) in the polynomial limb-darkening case.
+\end{itemize}
+$\mathcal{P}$ and $\mathcal{Q}$ are given by \citealt[Equation D32]{starry}, for the general case, and \citealt[Equation 71]{Agol2020}, in the polynomial limb-darkening case
 
 
 \begingroup\makeatletter\def\f@size{9}\check@mathfonts
