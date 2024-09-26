@@ -54,7 +54,7 @@ with
 \begin{equation}\bvec{r^\mathsf{T}} \equiv \iint \mathbf{\tilde{p}}^\top\,\text{d}S,\end{equation}
 since $\bvec{A_1}$, $\bvec{R}$ and $\bvec{y}$ are independent of the coordinates on the sphere.\\\\
 As $\bvec{\tilde{p}}$ is simply made of polynomials of the coordinates $x$, $y$ and $z$, the elements of the \textit{rotation vector} $\bvec{r}$ can be computed analytically and only once for a given $l_{max}$ (see \citealt[Eq. 20]{starry}).\\\\
-\subsection{Occultation light curve}
+\subsection{Occultation light curve}\label{occultation}
 The same formalism can be used to compute the integrated intensity of a surface map occulted by another spherical body. In this case, the intensity of the map must be integrated only over the unocculted surface $S$ of the disk, such that 
 \begin{equation} F = \iint_S I(x,y)\,\text{d}S = \left(\iint_S \bvec{\tilde p^\mathsf{T}}\,\text{d}S\right)\bvec{A_1}\bvec{R}\bvec{y}.\end{equation}
 To simplify this expression, \citealt{pal2012} note that any two-dimensional integral of the unocculted disk can be reduced to a one-dimensional integral over the contour $C$ of the occulting body using Green's theorem\footnote{Also known as Stokes' theorem in three-dimensional vector calculus.}. This can be done if the integrand of the integral over S can be described by a function $f$ such that
@@ -82,6 +82,19 @@ For these reasons, and because of its wide application, our implementation treat
 
 \newpage
 \section{Implementation details}\label{optimization}
+
+\subsection{Limb-darkening normalization}
+In \textsf{starry} version 0.2.2 \citep{starry}, the normalization of a limb-darkened light curve was done by assuming that adding limb-darkening to a non-uniform surface does not modify its total luminosity. Hence, the total flux received from a star during its complete rotation should be the same with or without limb-darkening. In older versions of starry ($\le$0.2.2), this was done by actually computing the light curve of the star with and without limb darkening, and using the ratio of the two to normalize the limb-darkened light curve. As discussed in the \textsf{starry} documentation\footlink{https://starry.readthedocs.io/en/latest/notebooks/LDNormalization/} this approach is wrong and leads to an unphysical normalization.\\\\
+Instead, one can assume that the total flux of the star should be similar for all observers, independently of the surface map of the star. By noticing that all components of the spherical harmonics basis integrate to 0 (except the constant component $Y_{0,0}$) we deduce that the mean flux of the star is that of a static surface as seen by different observers, which corresponds to a purely limb-darkened surface (with no other source of non-uniformity). In the spherical harmonics basis, this surface can be represented by the vector
+\begin{equation}
+    \bvec{y_u} = \bvec{U}\bvec{u}
+\end{equation}
+where $\bvec{U}$ is the change of basis matrix from the polynomial limb-darkening coefficients to the spherical harmonics coefficients. The flux of this purely limb-darkened surface is
+\begin{equation}
+    f_u = \bvec{r}^\mathsf{T}\bvec{A_1}\bvec{y_u}
+\end{equation}
+which can serve as a normalization factor. In practice we use $\pi/f_u$ to be this factor, so that the total flux for a uniform map with no limb darkening is unchanged.
+
 \subsection{Limb-darkening multiplicative maps}
 \subsection{Spherical harmonics rotations}
 
@@ -127,95 +140,133 @@ This way, the complete rotation reduces to the four separate steps shown in \aut
     \end{center}
 \end{figure}
 
-\subsection{Computation of the solution vectors}\label{solution_vectors}
+\newpage
+\subsection{Computation of the solution vectors}\label{solution_vector}
 
-In the general case, we described in \ref{model_occultation} how the integrated intensity of a spherical body occulted by another can be computed using the solution vector $\bvec{s}$. \cite{pal2012} shows that, knowing $\bvec{G}_n$, \autoref{eq:sn_gn} can be decomposed into
+We described in \autoref{occultation} how the integrated intensity of a spherical body occulted by another can be computed using the solution vector $\bvec{s}^\mathsf{T}$. \cite{pal2012} emphasizes that, knowing $\bvec{G}_n$, each component $s_n$ of the solution vector defined in \autoref{eq:sn_gn} can be decomposed into
 \begin{equation}
     s_n = \mathcal{Q}(\bvec{G}_n) - \mathcal{P}(\bvec{G}_n)
 \end{equation}
-where $\mathcal{Q}(\bvec{G}_n)$ and $\mathcal{P}(\bvec{G}_n)$ are line integrals over the contour of the occulting body parametrized by the angle $\varphi$ shown in \autoref{}\\\\
+where $\mathcal{Q}(\bvec{G}_n)$ and $\mathcal{P}(\bvec{G}_n)$ are line integrals over the contours of the occulting body and the primary's surface, as shown in \autoref{fig:geometry}.
+%
+\begin{figure}[H]
+    \begin{center}
+        \includegraphics[width=\textwidth]{../workflows/geometry/figures/occultation_geometry.pdf}
+        \caption{Geometric configuration and angles definitions for the two-body occultation. On the left figure, the larger light grey disk corresponds to the primary body being occulted by the darker secondary body. On the right figure, the area $S$ on which the intensity is integrated is shown in light blue. By choosing an appropriate transform, the integration over $S$ can be reduced to a line integral over the contour of the occulting body, which can be decomposed into the contour of the occulting body within the area of the primary body (in cyan) and the contour of the primary body everywhere else (in blue).}
+        \label{fig:geometry}
+    \end{center}
+\end{figure}
+%
+In the general case, the $\mathcal{Q}$ integral takes a simple analytical form and can be computed using the recurrence relations from \cite{starry} (Equation D29). The case of a limb-darkened surface is even simpler as $\mathcal{Q}(\bvec{G}_n) = 0$ for all $n > 0$. On the other hand, the $\mathcal{P}$ integral is harder to evaluate and requires the use of recurrence relations and truncated series expansions, with a scheme that depends on the geometric configuration of the system (see \citealt{starry}, Section D.2).\\\\
+In order to translate the \textsf{starry}  implementation to \textsf{JAX}, we evaluate the $\mathcal{P}$ integrals numerically using Gauss-Legendre integrations, requiring the evaluation of the integrated functions only over a fixed number of points.\\\\
 
+\subsubsection{Polynomial limb-darkening}
+For a surface described by a polynomial limb-darkening law of order $n$, the $\mathcal{P}$ integral is given in \cite{Agol2020} by
+\begingroup\makeatletter\def\f@size{9}\check@mathfonts
+$$
+    \mbox{\normalsize$\mathcal{P}(\bvec{G}_n)$} =
+    \begin{dcases}
+        %
+        \pi - \kappa_1 - r^2\kappa_0 + \textit{A}_{kite} & \qquad n = 0
+        \\[1em]
+        2s_0 + 4\pi\eta - 2\pi & \qquad n = 2
+        \\[1em]
+        2r(4br)^{\frac{n}{2}}
+        \int\displaylimits_{-\kappa_0/2}^{\kappa_0/2}
+        (k^2 - \sin^2{\varphi '})^{\frac{n}{2}}
+        (r - b + 2b\sin^2\varphi ') \, \text{d}\varphi ' & \qquad \mathrm{n\ge3},
+    \end{dcases}
+$$
+\endgroup
+where $\kappa_0$, $\kappa_1$ and $A_{kite}$ are the angles and area shown in \autoref{fig:geometry} and computed following \cite{Agol2020} (Equations 31 and 32). For $n=2$, $\eta$ is defined in \cite{Agol2020} (Equation 53) and depends on the elliptic parameter
+%
+\begin{equation}
+    k = \frac{1-r^2 - b^2 + 2br}{4br}.
+\end{equation}\\
+%
+For $n=1$, we use Equation 31, 32 and 34 from \cite{starry} to write
+%
+\begin{equation}
+    \mathcal{P}(\bvec{G}_1) = \int\displaylimits_{-\kappa_0/2}^{\kappa_0/2}
+        r(r-b\cos{2\varphi '})\;\frac{1-z^3}{3(1-z^2)}\text{d}\varphi ' \quad \text{and} \quad \mathcal{Q}(\bvec{G}_1) = \frac{2}{3}(\pi-\kappa_1),
+\end{equation}\\
+%
+where $1 - z^2 = b + r - 2\cos{\varphi '}$ \footnote{note that $\varphi '$ is different from the angle $\varphi$ shown in \autoref{fig:geometry} and was introduced through the change of variable $\varphi ' = \frac{1}{2}(\varphi -\frac{3\pi}{2})$.}.
+\subsubsection{Non-uniform surface}
+In the general case, for a star with a non-radially symmetric surface intensity, $n$ denotes the index of the spherical harmonics component such that
+\begin{equation}
+    n = l^2 + l + m,
+\end{equation}
+where $l$ is the degree of the spherical harmonic and $m$ its order. For each component, the expression of $\mathcal{P}(\bvec{G}_n)$ depends on $\mu$ and $\nu$ defined as
+\begin{equation}
+    \begin{aligned}
+    \mu &= l - m,\\
+    \nu &= l + m.
+    \end{aligned}
+\end{equation}
 
-\begin{itemize}
-    \item $\mathcal{Q}(\bvec{G}_n)$ is given by \citealt{starry} (Equation D28-29) in the general case, and is conveniently equal to $0$ for all $n > 0$ in the polynomial limb-darkening case.
-    \item $\mathcal{P}(\bvec{G}_n)$ is given by \citealt{starry} (Equation D32), for the general case, and by \citealt{Agol2020} (Equation 71) in the polynomial limb-darkening case.
-\end{itemize}
-$\mathcal{P}$ and $\mathcal{Q}$ are given by \citealt[Equation D32]{starry}, for the general case, and \citealt[Equation 71]{Agol2020}, in the polynomial limb-darkening case
-
-
+The $\mathcal{P}$ integral is then given by Equation D32 from \cite{starry} as
+%
 \begingroup\makeatletter\def\f@size{9}\check@mathfonts
 $$
     \mbox{\normalsize$\mathcal{P}(\bvec{G}_n)$} =
     \begin{dcases}
         %
         2(2r)^{l+2}\int\displaylimits_{-\kappa/2}^{\kappa/2}
-            (s_\varphi^2 -s_\varphi^4)^{\frac{\mu+4}{4}}
-            (\delta + s_\varphi^2)^{\frac{\nu}{2}}
-            \, \text{d}\varphi
+            (s_{\varphi '}^2 -s_{\varphi '}^4)^{\frac{\mu+4}{4}}
+            (\delta + s_{\varphi '}^2)^{\frac{\nu}{2}}
+            \, \text{d}\varphi '
             %
             & \qquad \frac{\mu}{2} \, \mathrm{even}
         \\[1em]
         %
         \mathcal{F}\int\displaylimits_{-\kappa/2}^{\kappa/2}
-            (s_\varphi^2-s_\varphi^4)^{\tfrac{l-2}{2}}
-            (k^2- s_\varphi^2)^{\frac{3}{2}}
-            (1-2s_\varphi^2)
-            \, \text{d}\varphi
+            (s_{\varphi '}^2-s_{\varphi '}^4)^{\tfrac{l-2}{2}}
+            (k^2- s_{\varphi '}^2)^{\frac{3}{2}}
+            (1-2s_{\varphi '}^2)
+            \, \text{d}\varphi '
             %
             & \qquad \mu = 1, \,
                      l \, \mathrm{even}
         \\[1em]
         %
         \mathcal{F}\int\displaylimits_{-\kappa/2}^{\kappa/2}
-            (s_\varphi^2-s_\varphi^4)^{\tfrac{l-3}{2}}
-            (\delta + s_\varphi^2)
-            (k^2- s_\varphi^2)^{\frac{3}{2}}
-            (1-2 s_\varphi^2)
-            \, \text{d}\varphi
+            (s_{\varphi '}^2-s_{\varphi '}^4)^{\tfrac{l-3}{2}}
+            (\delta + s_{\varphi '}^2)
+            (k^2- s_{\varphi '}^2)^{\frac{3}{2}}
+            (1-2 s_{\varphi '}^2)
+            \, \text{d}\varphi '
             %
             & \qquad \mu = 1, \, l \ne 1, \,
                      l \, \mathrm{odd}
         \\[1em]
         %
         2\mathcal{F}\int\displaylimits_{-\kappa/2}^{\kappa/2}
-            (s_\varphi^2-s_\varphi^4)^{\frac{\mu-1}{4}}
-            (\delta + s_\varphi^2)^{\frac{\nu-1}{2}}
-            (k^2 - s_\varphi^2)^{\frac{3}{2}}
-            \, \text{d}\varphi
+            (s_{\varphi '}^2-s_{\varphi '}^4)^{\frac{\mu-1}{4}}
+            (\delta + s_{\varphi '}^2)^{\frac{\nu-1}{2}}
+            (k^2 - s_{\varphi '}^2)^{\frac{3}{2}}
+            \, \text{d}\varphi '
             & \qquad \frac{\mu-1}{2} \, \mathrm{even}, \, l \ne 1
         \\[1em]
         %
         \int\displaylimits_{-\kappa/2}^{\kappa/2}
-        r(r-b\cos{2\varphi})\;\frac{1-z^3}{3(1-z^2)}\text{d}\varphi & \qquad \mu=1, \, l=1
+        r(r-b\cos{2\varphi '})\;\frac{1-z^3}{3(1-z^2)}\text{d}\varphi ' & \qquad \mu=1, \, l=1
         \\[1em]
         %
         0 & \qquad \mathrm{otherwise},
     \end{dcases}
 $$
 \endgroup
-
-\begingroup\makeatletter\def\f@size{9}\check@mathfonts
-$$
-    \mbox{\normalsize$s_n$} =
-    \begin{dcases}
-        %
-        \pi - \kappa_1 - r^2\kappa_0 + \textit{A}_{kite} & \qquad n = 0
-        \\[1em]
-        \int\displaylimits_{-\kappa_0/2}^{\kappa_0/2}
-        r(r-b\cos{2\varphi})\;\frac{1-z^3}{3(1-z^2)}\text{d}\varphi - \frac{2}{3}(\kappa_1 - \pi)& \qquad n = 1
-        \\[1em]
-        2s_0 + 4\pi\eta - 2\pi & \qquad n = 2
-        \\[1em]
-        2r(4br)^{\frac{n}{2}}
-        \int\displaylimits_{-\kappa_0/2}^{\kappa_0/2}
-        (k^2 - s_\varphi^2)^{\frac{n}{2}}
-        (r - b + 2bs_\varphi^2) \, \text{d}\varphi & \qquad \mathrm{n\ge3},
-    \end{dcases}
-$$
-\endgroup
+%
+where $s_{\varphi '} = \sin{\varphi '}$, $\kappa = \varphi + \frac{\pi}{2}$ (see \citealt[Equation D31]{starry}) and $\delta$ is defined for numerical stability as
+\begin{equation}
+    \delta=\frac{b-r}{2r}.
+\end{equation}
+Note how, unlike in the \textsf{starry} implementation, the term $\mu=1$, $l=1$ is derived exactly like in the polynomial limb-darkening case, instead of analytically which would require the evaluation of elliptic integrals.\\\\
+Because of its numerical integration, the precision of the $\mathcal{P}$ integral is limited and depends on the order $q$ of the Gauss-Legendre quadrature, which corresponds to the number of point for which the integrand is evaluated. To minimize this number, we note that all integrands are symmetrical functions, except for $\mu=1$ and $l=1$. Hence, all integrals can be computed over the interval $[0, \kappa/2]$ and multiplied by 2. We also note that all terms for which $\frac{\mu}{2}$ is even reach machine precision for an integration order as low as $q=20$, that we hold fix. With these optimizations, we benchmark the precision and speed of our final implementation for the solution vector in \autoref{performance}.
     
 \newpage
-\section{Performance}\label{performances}
+\section{Performance}\label{performance}
 Although \textit{starry} occultation light curves have analytical expressions, their practical implementation relies on numerical approximations chosen to balance precision and computation time. This is the case, for example, of the solution vector $\bvec{s}$, computed using numerical series expansions in \textsf{starry} (\citealt[section D.2.3]{starry}) and numerical integration in \textsf{jaxoplanet} (see \autoref{solution_vectors}). Other expressions, such as the Wigner-D matrices used in the rotation of the spherical harmonics basis, are computed using reccurence relations prone to the accumulation of numerical errors and instability.\\\\
 In this section, we evaluate the accuracy and speed of the \textsf{jaxoplanet} implementation and compare it with the C++ implementation of \textsf{starry}.
 
