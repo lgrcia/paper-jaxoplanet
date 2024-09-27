@@ -1,6 +1,6 @@
 import numpy as np
 
-l_max = 20
+l_max = 10
 
 radii = (0.01, 100) # small and large radii
 N = 500
@@ -20,8 +20,8 @@ rule all:
         "figures/limbdark_error.pdf",
         "figures/error_SAR.pdf",
         "figures/br_error.png",
-        # "figures/error_order.pdf",
-        # "figures/error_order_degree.pdf"
+        "figures/error_order.pdf",
+        "figures/error_order_degree.pdf"
 
 
 # ERROR FOR DIFFERENT SPHERICAL HARMONIC DEGREES
@@ -201,7 +201,7 @@ rule jax_fs_nonuniform_limbdark:
     params:
         degree = l_max,
         order = 500
-    script: "scripts/jax_f_nonuniform_limbdark.py"
+    script: "scripts/jax_f_nonuiform_limbdark.py"
 
 rule exoplanet_fs_limbdark:
     # Compute the flux for a given r and range of b for a limb-darkened star
@@ -225,8 +225,8 @@ rule starry_fs_limbdark:
 rule plot_error_limbdark:
     # Plot the error in the flux and s as a function of b and the degree of the spherical harmonic
     input:
-        jax_nu = [f"results/jax_nonuniform_limbdark_f_{r}.npz" for r in radii],
-        jax = [f"results/jax_limbdark_f_{r}.npz" for r in radii],
+        jax = [f"results/jax_f_{r}.npz" for r in radii],
+        jax_ld = [f"results/jax_limbdark_f_{r}.npz" for r in radii],
         starry = [f"results/starry_limbdark_f_{r}.npz" for r in radii],
         exo = [f"results/exoplanet_limbdark_f_{r}.npz" for r in radii],
         num = [f"results/num_limbdark_f_{r}.npz" for r in radii],

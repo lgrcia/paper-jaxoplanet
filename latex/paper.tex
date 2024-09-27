@@ -71,9 +71,9 @@ Using these expressions, the integrated intensity of the occulted map follows th
 with $\bvec{A} = \bvec{A_2A_1}$ and the integrals $s_n$ arranged in the \textit{solution vector} $\bvec{s^\mathsf{T}}$.\\\\
 
 \subsection{Limb-darkened surfaces}
-We notice that a simpler situation is encountered when the surface of the spherical body can be described by a radial intensity profile $I(r)$, such as a limb-darkened star. In this case, the vector of spherical harmonics coefficients $\bvec{y}$ is very sparse (because all $m\neq0$ components are zero) and the surface map doesn't need to be rotated. Contemporary to \cite{starry}, \cite{Agol2020} explore this case and provide simple expressions for the integrated intensity of a star whose surface can be described by a polynomial limb-darkening law occulted by an opaque body. In this case:
+We notice that a simpler situation is encountered when the surface of the spherical body can be described by a radial intensity profile $I(r)$, such as a limb-darkened star. In this case, the vector of spherical harmonics coefficients $\bvec{y}$ is very sparse (because all $m\neq0$ components are zero) and the surface map doesn't need to be rotated. Contemporary to \cite{starry}, \cite{Agol2020} explore this case and provide simple expressions for the integrated intensity of a star whose surface can be described by a polynomial limb darkening law occulted by an opaque body. In this case:
 \begin{enumerate}
-    \item The surface is simply described by $\bvec{u}$, a vector of polynomial limb-darkening coefficients.
+    \item The surface is simply described by $\bvec{u}$, a vector of polynomial limb darkening coefficients.
     \item The Green's basis takes a simpler form (see \citealt[Eq. X]{Agol2020}).
     \item Matrices involved in the computation of the integrated flux have $l_{max}$ columns, versus $(l_{max}+1)^2$ in the general case, reducing drastically the computational cost of the model.
 \end{enumerate}
@@ -83,19 +83,24 @@ For these reasons, and because of its wide application, our implementation treat
 \newpage
 \section{Implementation details}\label{optimization}
 
-\subsection{Limb-darkening normalization}
-In \textsf{starry} version 0.2.2 \citep{starry}, the normalization of a limb-darkened light curve was done by assuming that adding limb-darkening to a non-uniform surface does not modify its total luminosity. Hence, the total flux received from a star during its complete rotation should be the same with or without limb-darkening. In older versions of starry ($\le$0.2.2), this was done by actually computing the light curve of the star with and without limb darkening, and using the ratio of the two to normalize the limb-darkened light curve. As discussed in the \textsf{starry} documentation\footlink{https://starry.readthedocs.io/en/latest/notebooks/LDNormalization/} this approach is wrong and leads to an unphysical normalization.\\\\
-Instead, one can assume that the total flux of the star should be similar for all observers, independently of the surface map of the star. By noticing that all components of the spherical harmonics basis integrate to 0 (except the constant component $Y_{0,0}$) we deduce that the mean flux of the star is that of a static surface as seen by different observers, which corresponds to a purely limb-darkened surface (with no other source of non-uniformity). In the spherical harmonics basis, this surface can be represented by the vector
+\subsection{Limb darkened maps}
+Limb darkened maps are obtained by multiplying a base map, devoid of limb darkening, with a pure limb darkened map. If $\bvec{U}$ is the change of basis matrix from the polynomial limb darkening coefficients $\bvec{u}$ to the spherical harmonics basis, the pure limb darkened map is
 \begin{equation}
-    \bvec{y_u} = \bvec{U}\bvec{u}
+    \label{eq:limb_darkening_map}
+    \bvec{y}_u = \bvec{U}\bvec{u}.
 \end{equation}
-where $\bvec{U}$ is the change of basis matrix from the polynomial limb-darkening coefficients to the spherical harmonics coefficients. The flux of this purely limb-darkened surface is
-\begin{equation}
-    f_u = \bvec{r}^\mathsf{T}\bvec{A_1}\bvec{y_u}
-\end{equation}
-which can serve as a normalization factor. In practice we use $\pi/f_u$ to be this factor, so that the total flux for a uniform map with no limb darkening is unchanged.
+The multiplication of the base map represented by $\bvec{y}$ with the limb darkening map represented by $\bvec{y}_u$ can be seen as the multiplication of two polynomial functions, only with special coefficients (called Clebsch–Gordan coefficients) inherent to the properties of spherical harmonics. To simplify this operation, we transform both maps into the polynomial basis, so that their product is the actual product of two polynomials.
 
-\subsection{Limb-darkening multiplicative maps}
+\subsection{Limb darkening normalization}
+In \textsf{starry} version 0.2.2 \citep{starry}, the normalization of a limb-darkened light curve was done by assuming that adding limb darkening to a non-uniform surface does not modify its total luminosity. Hence, the total flux received from a star during its complete rotation should be the same with or without limb darkening. In older versions of starry ($\le$0.2.2), this was done by actually computing the light curve of the star with and without limb darkening, and using the ratio of the two to normalize the limb-darkened light curve. As discussed in the \textsf{starry} documentation\footlink{https://starry.readthedocs.io/en/latest/notebooks/LDNormalization/} this approach is wrong and leads to an unphysical normalization.\\\\
+Instead, one can assume that the total flux of the star should be similar for all observers, independently of the surface map of the star. By noticing that all components of the spherical harmonics basis integrate to 0 (except the constant component $Y_{0,0}$) we deduce that the mean flux of the star must be coming from the surface feature seen by any observer, no matter his viewpoint, which corresponds to a purely limb-darkened surface (with no other source of non-uniformity).\\\\
+The flux of this purely limb-darkened surface is
+\begin{equation}
+    f_u = \bvec{r}^\mathsf{T}\bvec{A_1}\bvec{y}_u
+\end{equation}
+with $\bvec{y}_u$ defined in \autoref{eq:limb_darkening_map}. Hence, we normalize limb-darkened maps by $\pi/f_u$, so that the total flux for a uniform map with no limb darkening is unchanged.
+
+
 \subsection{Spherical harmonics rotations}
 
 % tldr: rotating SH involves costly matrices computations. Hence its smart to figure out which one to pre-compute. That what RL did, amd it led to 6 elementary rotations. However, now that we use jax we don't care that much, and we can reduce the all thing to a single rotation that is optimized at compiled time.\\\\
@@ -140,7 +145,6 @@ This way, the complete rotation reduces to the four separate steps shown in \aut
     \end{center}
 \end{figure}
 
-\newpage
 \subsection{Computation of the solution vectors}\label{solution_vector}
 
 We described in \autoref{occultation} how the integrated intensity of a spherical body occulted by another can be computed using the solution vector $\bvec{s}^\mathsf{T}$. \cite{pal2012} emphasizes that, knowing $\bvec{G}_n$, each component $s_n$ of the solution vector defined in \autoref{eq:sn_gn} can be decomposed into
@@ -160,8 +164,8 @@ where $\mathcal{Q}(\bvec{G}_n)$ and $\mathcal{P}(\bvec{G}_n)$ are line integrals
 In the general case, the $\mathcal{Q}$ integral takes a simple analytical form and can be computed using the recurrence relations from \cite{starry} (Equation D29). The case of a limb-darkened surface is even simpler as $\mathcal{Q}(\bvec{G}_n) = 0$ for all $n > 0$. On the other hand, the $\mathcal{P}$ integral is harder to evaluate and requires the use of recurrence relations and truncated series expansions, with a scheme that depends on the geometric configuration of the system (see \citealt{starry}, Section D.2).\\\\
 In order to translate the \textsf{starry}  implementation to \textsf{JAX}, we evaluate the $\mathcal{P}$ integrals numerically using Gauss-Legendre integrations, requiring the evaluation of the integrated functions only over a fixed number of points.\\\\
 
-\subsubsection{Polynomial limb-darkening}
-For a surface described by a polynomial limb-darkening law of order $n$, the $\mathcal{P}$ integral is given in \cite{Agol2020} by
+\subsubsection{Polynomial limb darkening}
+For a surface described by a polynomial limb darkening law of order $n$, the $\mathcal{P}$ integral is given in \cite{Agol2020} by
 \begingroup\makeatletter\def\f@size{9}\check@mathfonts
 $$
     \mbox{\normalsize$\mathcal{P}(\bvec{G}_n)$} =
@@ -200,8 +204,8 @@ In the general case, for a star with a non-radially symmetric surface intensity,
 where $l$ is the degree of the spherical harmonic and $m$ its order. For each component, the expression of $\mathcal{P}(\bvec{G}_n)$ depends on $\mu$ and $\nu$ defined as
 \begin{equation}
     \begin{aligned}
-    \mu &= l - m,\\
-    \nu &= l + m.
+    \mu &\equiv l - m,\\
+    \nu &\equiv l + m.
     \end{aligned}
 \end{equation}
 
@@ -262,8 +266,8 @@ where $s_{\varphi '} = \sin{\varphi '}$, $\kappa = \varphi + \frac{\pi}{2}$ (see
 \begin{equation}
     \delta=\frac{b-r}{2r}.
 \end{equation}
-Note how, unlike in the \textsf{starry} implementation, the term $\mu=1$, $l=1$ is derived exactly like in the polynomial limb-darkening case, instead of analytically which would require the evaluation of elliptic integrals.\\\\
-Because of its numerical integration, the precision of the $\mathcal{P}$ integral is limited and depends on the order $q$ of the Gauss-Legendre quadrature, which corresponds to the number of point for which the integrand is evaluated. To minimize this number, we note that all integrands are symmetrical functions, except for $\mu=1$ and $l=1$. Hence, all integrals can be computed over the interval $[0, \kappa/2]$ and multiplied by 2. We also note that all terms for which $\frac{\mu}{2}$ is even reach machine precision for an integration order as low as $q=20$, that we hold fix. With these optimizations, we benchmark the precision and speed of our final implementation for the solution vector in \autoref{performance}.
+Note how, unlike in the \textsf{starry} implementation, the term $\mu=1$, $l=1$ is derived exactly like in the polynomial limb darkening case, instead of analytically which would require the evaluation of elliptic integrals.\\\\
+Because of its numerical integration, the precision of the $\mathcal{P}$ integral is limited and depends on the order $q$ of the Gauss-Legendre quadrature, which corresponds to the number of point for which the integrand is evaluated. To minimize this number, we note that all integrands are symmetrical functions, except for $\mu=1$ and $l=1$. Hence, all integrals can be computed over the interval $\left[0, \frac{\kappa}{2}\right]$, instead of $\left[-\frac{\kappa}{2}, \frac{\kappa}{2}\right]$, and multiplied by 2. We also note that all terms for which $\frac{\mu}{2}$ is even reach machine precision for an integration order as low as $q=20$, that we hold fix. With these optimizations, we benchmark the precision and speed of our final implementation for the solution vector in \autoref{performance}.
     
 \newpage
 \section{Performance}\label{performance}
@@ -287,15 +291,15 @@ Assuming that we perform the numerical integration of the solution vector $\bvec
         \label{fig:precision_degree}
     \end{center}
 \end{figure}
-For reference, \autoref{fig:precision_limbdark} shows the relative error in the flux of a limb-darkened star occulted by an opaque body for increasing orders of a polynomial limb-darkening law. In this figure, we also report the error of the flux computed using the \textsf{exoplanet} Python package (limited to linear and quadratic limb-darkening).
+For reference, \autoref{fig:precision_limbdark} shows the relative error in the flux of a limb-darkened star occulted by an opaque body for increasing orders of a polynomial limb darkening law. In this figure, we also report the error of the flux computed using the \textsf{exoplanet} Python package (limited to linear and quadratic limb darkening).
 \begin{figure}[H]
     \begin{center}
         \includegraphics[width=\textwidth]{../workflows/precision/figures/limbdark_error.PDF}
-        \caption{Maximum errors in the overall flux $f$ of a star occulted by an opaque body for increasing orders of its polynomial limb-darkening law. Errors shown in this figure correspond to the maximum values of the scaled errors shown in \autoref{fig:precision_s}, taken over the range of values $b$. For each order $n$ all limb-darkening coefficients are set to zero except the $n$-th coefficient $u_n=1$. \codelink{workflows/precision/scripts/plot_error_limbdark}}
+        \caption{Maximum errors in the overall flux $f$ of a star occulted by an opaque body for increasing orders of its polynomial limb darkening law. Errors shown in this figure correspond to the maximum values of the scaled errors shown in \autoref{fig:precision_s}, taken over the range of values $b$. For each order $n$ all limb darkening coefficients are set to zero except the $n$-th coefficient $u_n=1$. \codelink{workflows/precision/scripts/plot_error_limbdark}}
         \label{fig:precision_limbdark}
     \end{center}
 \end{figure}
-A set of unitary polynomial limb-darkening coefficients of order 20 leads to spherical harmonics coefficients as large as $10^6$. This explains the larger errors observed in \autoref{fig:precision_limbdark} (error versus limb-darkening order) compared to the ones shown in \autoref{fig:precision_degree} (error versus degree of the spherical harmonics). We not that the errors scale with the values of $u$.\\\\
+A set of unitary polynomial limb darkening coefficients of order 20 leads to spherical harmonics coefficients as large as $10^6$. This explains the larger errors observed in \autoref{fig:precision_limbdark} (error versus limb darkening order) compared to the ones shown in \autoref{fig:precision_degree} (error versus degree of the spherical harmonics). We not that the errors scale with the values of $u$.\\\\
 As described in \autoref{solution_vectors}, we compute \textit{starry} light curves using the Gauss Legendre quadrature to approximate the $\mathcal{P}$ integral involved in the expression of the solution vector $\bvec{s}$. Hence, the precision of the computed flux $f$ depends on the order of the Legendre polynomial which defines the number of points used to approximate $\mathcal{P}$. For this reason, users must carefully set the order parameter to reach the precision required for their application, as shown in \autoref{fig:relative_error_1}.\\\\
 \begin{figure}[H]
     \begin{center}

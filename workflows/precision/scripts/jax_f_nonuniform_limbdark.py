@@ -24,18 +24,10 @@ def u(deg):
         return u
 
 
-# function = jax.vmap(
-#     lambda deg, b: surface_light_curve(
-#         Surface(u=u(deg)), y=b, z=10.0, r=r, order=order
-#     ),
-#     (None, 0),
-# )
-
-# USING LIMB-DARK
-from jaxoplanet.core.limb_dark import light_curve
-
 function = jax.vmap(
-    lambda deg, b: light_curve(u(deg), b, r, order=100) + 1,
+    lambda deg, b: surface_light_curve(
+        Surface(u=u(deg)), y=b, z=10.0, r=r, order=order
+    ),
     (None, 0),
 )
 

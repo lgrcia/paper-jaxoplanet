@@ -24,6 +24,9 @@ _ = get_R("R_mx", l_max, cache=matrices)
 _ = get_R("R_inc", l_max, inc=inc, obl=obl, cache=matrices)
 _ = get_R("R_obl", l_max, inc=inc, obl=obl, cache=matrices)
 
+print("Computing A1inv...")
+matrices[l_max]["A1inv"] = matrices[l_max]["A1"] ** -1
+
 import pickle
 
 with open(snakemake.output[0], "wb") as f:
