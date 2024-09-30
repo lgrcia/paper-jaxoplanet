@@ -79,6 +79,16 @@ rule plot_error_vs_order:
 
 fixed_order = 200
 
+rule flux_all_single_b:
+    params:
+        orders=orders,
+        radius = radius,
+        u = u
+    output:
+        "data/flux_all_single_b.pickle"
+    script:
+        "scripts/flux_all_single_b.py"
+
 rule plot_error_vs_N:
     input:
         starry_quadratic = [f"data/flux_starry_quadratic_{N}.npz" for N in Ns],
