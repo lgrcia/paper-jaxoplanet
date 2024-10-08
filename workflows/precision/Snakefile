@@ -19,9 +19,9 @@ rule all:
         "figures/error_degree.pdf",
         "figures/limbdark_error.pdf",
         "figures/error_SAR.pdf",
-        "figures/br_error.png",
-        # "figures/error_order.pdf",
-        # "figures/error_order_degree.pdf"
+        # "figures/br_error.png",
+        "figures/error_order.pdf",
+        "figures/error_order_degree.pdf"
 
 
 # ERROR FOR DIFFERENT SPHERICAL HARMONIC DEGREES
@@ -115,9 +115,9 @@ rule plot_error_starry:
 rule plot_error_degree:
     # Plot the error in the flux and s as a function of b and the degree of the spherical harmonic
     input:
-        jax = [f"results/jax_fs_r={r}_order=500.npz" for r in radii],
+        jax = [f"results/jax_fs_r={r}_order=250.npz" for r in radii],
         num = [f"results/num_fs_{r}.npz" for r in radii],
-        starry = [f"results/starry_fs_{r}.npz" for r in radii]
+        starry = [f"static/starry_fs_{r}.npz" for r in radii]
     params:
         l_max = l_max
     output: "figures/error_degree.pdf"
@@ -171,6 +171,8 @@ rule br_plot:
 # ERROR FOR DIFFERENT LIMB-DARKENING POLYNOMIAL ORDERS
 # ----------------------------------------------------
 
+limb_dark_q = 100
+
 rule num_fs_limbdark:
     # Compute the flux for a given r and range of b for a limb-darkened star
     # with polynomial law
@@ -190,7 +192,7 @@ rule jax_fs_limbdark:
     output: "results/jax_limbdark_f_{r}.npz"
     params:
         degree = l_max,
-        order = 500
+        order = limb_dark_q
     script: "scripts/jax_f_limbdark.py"
 
 rule jax_fs_nonuniform_limbdark:
@@ -200,7 +202,7 @@ rule jax_fs_nonuniform_limbdark:
     output: "results/jax_nonuniform_limbdark_f_{r}.npz"
     params:
         degree = l_max,
-        order = 500
+        order = limb_dark_q
     script: "scripts/jax_f_nonuniform_limbdark.py"
 
 rule exoplanet_fs_limbdark:
@@ -227,11 +229,12 @@ rule plot_error_limbdark:
     input:
         jax_nu = [f"results/jax_nonuniform_limbdark_f_{r}.npz" for r in radii],
         jax = [f"results/jax_limbdark_f_{r}.npz" for r in radii],
-        starry = [f"results/starry_limbdark_f_{r}.npz" for r in radii],
+        starry = [f"static/starry_limbdark_f_{r}.npz" for r in radii],
         exo = [f"results/exoplanet_limbdark_f_{r}.npz" for r in radii],
         num = [f"results/num_limbdark_f_{r}.npz" for r in radii],
     params:
-        degree = l_max
+        degree = l_max,
+        order = limb_dark_q
     output: "figures/limbdark_error.pdf"
     script: "scripts/plot_error_limbdark.py"
 

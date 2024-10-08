@@ -33,7 +33,6 @@ jax_s_function = jax.jit(
 
 jax_f_function = jax.vmap(jax_flux, in_axes=(None, 0))
 
-
 jax_f = []
 jax_s = []
 

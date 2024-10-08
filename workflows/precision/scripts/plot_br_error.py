@@ -52,7 +52,7 @@ for i, order in enumerate(orders):
     else:
         ax.set_ylabel("b")
     ax.set_xlabel("r")
-    ax.set_title(rf"$n$ = {order}")
+    ax.set_title(rf"$q$ = {order}")
     colorbar(pcm)
 
 # cm_ax = fig.add_axes([1.5, 0.1, 0.02, 0.8])

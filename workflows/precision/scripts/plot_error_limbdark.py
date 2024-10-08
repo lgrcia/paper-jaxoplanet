@@ -1,8 +1,13 @@
+import jax
+
+jax.config.update("jax_enable_x64", True)
+
 import matplotlib.pyplot as plt
 import numpy as np
 from jaxoplanet.experimental.starry.multiprecision import mp, utils
 
 degree = snakemake.params.degree
+q_order = int(snakemake.params.order)
 
 data = {
     "small": {
@@ -63,6 +68,13 @@ ax1.set_title("$r=0.01$")
 ax1.set_yscale("log")
 ax1.set_ylim(1e-17, 1e-4)
 ax1.set_xticks(x)
+ax1.annotate(
+    f"q={q_order}",
+    xy=(1 - 0.02, 0.05),
+    xycoords="axes fraction",
+    fontsize=10,
+    ha="right",
+)
 
 ax2 = plt.subplot(122)
 ax2.plot(degrees, err["large"]["starry"], ".-", label="starry", c=color["starry"])

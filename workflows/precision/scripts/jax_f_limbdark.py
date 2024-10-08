@@ -35,7 +35,7 @@ def u(deg):
 from jaxoplanet.core.limb_dark import light_curve
 
 function = jax.vmap(
-    lambda deg, b: light_curve(u(deg), b, r, order=100) + 1,
+    lambda deg, b: light_curve(u(deg), b, r, order=order) + 1,
     (None, 0),
 )
 

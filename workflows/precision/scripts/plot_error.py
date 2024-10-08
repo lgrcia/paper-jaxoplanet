@@ -3,6 +3,9 @@
 # given degree l is the maximum error across all m \in [-l, l] components of that degree
 # (indices are for each degree are stored in the `indices` dictionary)
 
+import jax
+
+jax.config.update("jax_enable_x64", True)
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 import numpy as np
