@@ -21,7 +21,9 @@ order = int(snakemake.wildcards.order)
 @jax.jit
 def jax_flux(y, b):
     surface = Surface(y=Ylm.from_dense(y, normalize=False), normalize=False)
-    return surface_light_curve(surface, r=r, y=b, z=10.0, order=order)
+    return surface_light_curve(
+        surface, r=r, y=b, z=10.0, order=order, higher_precision=True
+    )
 
 
 jax_s_function = jax.jit(

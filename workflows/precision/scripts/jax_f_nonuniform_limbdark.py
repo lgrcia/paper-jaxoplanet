@@ -26,7 +26,7 @@ def u(deg):
 
 function = jax.vmap(
     lambda deg, b: surface_light_curve(
-        Surface(u=u(deg)), y=b, z=10.0, r=r, order=order
+        Surface(u=u(deg)), y=b, z=10.0, r=r, order=order, higher_precision=True
     ),
     (None, 0),
 )

@@ -7,7 +7,7 @@ br = np.load(snakemake.input["br"])
 r = br["r"]
 b = br["b"]
 data = {
-    "starry": np.load(snakemake.input["starry"]),
+    "ref": np.load(snakemake.input["reference"]),
     "jaxoplanet": {
         orders[i]: np.load(snakemake.input["jaxoplanet"][i]) for i in range(len(orders))
     },
@@ -36,7 +36,7 @@ fig, axes = plt.subplots(1, len(orders), figsize=(8.5, 2.5))
 for i, order in enumerate(orders):
     ax = axes[i]
     ax.set_aspect("equal", "box")
-    errors = np.abs(data["starry"]["flux"] - data["jaxoplanet"][order]["flux"])
+    errors = np.abs(data["ref"]["flux"] - data["jaxoplanet"][order]["flux"])
     errors[errors == 0] = 1e-20
     errors[np.logical_not(np.isfinite(errors))] = 1e-20
 

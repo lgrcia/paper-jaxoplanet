@@ -117,7 +117,7 @@ rule plot_error_degree:
     input:
         jax = [f"results/jax_fs_r={r}_order=250.npz" for r in radii],
         num = [f"results/num_fs_{r}.npz" for r in radii],
-        starry = [f"static/starry_fs_{r}.npz" for r in radii]
+        starry = [f"results/starry_fs_{r}.npz" for r in radii]
     params:
         l_max = l_max
     output: "figures/error_degree.pdf"
@@ -133,7 +133,7 @@ rule compute_SAR:
 
 rule plot_error_SAR:
     # Plot the error in the s, A and R matrices of jax and starry compared to mpmath
-    input: "data/num_fs_matrices.npz", "results/SAR.npz"
+    input: "data/num_fs_matrices.npz", "static/SAR.npz"
     output: "figures/error_SAR.pdf"
     params:
         l_max = l_max
@@ -161,7 +161,7 @@ rule br_plot:
     # Plot error on the flux in (b, r) space for different orders
     input: 
         jaxoplanet = [f"data/jax_f_order_{order}.npz" for order in error_orders],
-        starry = "data/starry_f_order.npz",
+        reference = "data/jax_f_order_800.npz",
         br = f"data/br_dense_{N}.npz"
     output: "figures/br_error.png"
     params:
@@ -227,7 +227,7 @@ rule starry_fs_limbdark:
 rule plot_error_limbdark:
     # Plot the error in the flux and s as a function of b and the degree of the spherical harmonic
     input:
-        jax_nu = [f"results/jax_nonuniform_limbdark_f_{r}.npz" for r in radii],
+        jax_ld = [f"results/jax_nonuniform_limbdark_f_{r}.npz" for r in radii],
         jax = [f"results/jax_limbdark_f_{r}.npz" for r in radii],
         starry = [f"static/starry_limbdark_f_{r}.npz" for r in radii],
         exo = [f"results/exoplanet_limbdark_f_{r}.npz" for r in radii],

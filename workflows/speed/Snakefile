@@ -77,7 +77,8 @@ rule plot_error_vs_order:
     script:
         "scripts/plot_error_vs_order.py"
 
-fixed_order = 200
+fixed_order_quad = 100
+fix_order_l20 = 200
 
 rule flux_all_single_b:
     params:
@@ -92,50 +93,17 @@ rule flux_all_single_b:
 rule plot_error_vs_N:
     input:
         starry_quadratic = [f"data/flux_starry_quadratic_{N}.npz" for N in Ns],
-        jaxoplanet_quadratic = [f"data/flux_jaxoplanet_quadratic_{N}_{fixed_order}.npz" for N in Ns],
-        jaxoplanet_quadratic_gpu = [f"static/gpu/flux_jaxoplanet_quadratic_{N}_{fixed_order}.npz" for N in Ns],
+        jaxoplanet_quadratic = [f"data/flux_jaxoplanet_quadratic_{N}_{fixed_order_quad}.npz" for N in Ns],
+        jaxoplanet_quadratic_gpu = [f"static/gpu/flux_jaxoplanet_quadratic_{N}_{fixed_order_quad}.npz" for N in Ns],
         exoplanet_quadratic = [f"data/flux_exoplanet_quadratic_{N}.npz" for N in Ns],
         starry_l20 = [f"data/flux_starry_l20_{N}.npz" for N in Ns],
-        jaxoplanet_l20 = [f"data/flux_jaxoplanet_l20_{N}_{fixed_order}.npz" for N in Ns],
-        jaxoplanet_l20_gpu = [f"static/gpu/flux_jaxoplanet_l20_{N}_{fixed_order}.npz" for N in Ns]
+        jaxoplanet_l20 = [f"data/flux_jaxoplanet_l20_{N}_{fix_order_l20}.npz" for N in Ns],
+        jaxoplanet_l20_gpu = [f"static/gpu/flux_jaxoplanet_l20_{N}_{fix_order_l20}.npz" for N in Ns]
     output:
         "figures/speed_vs_N.pdf"
     params:
-        Ns=Ns
+        Ns=Ns,
+        order_l20=fix_order_l20,
+        order_quad=fixed_order_quad
     script:
         "scripts/plot_speed_vs_N.py"
-
-
-
-# rule plot_error_rb:
-#     input:
-#         starry = "data/flux_starry_500.npz",
-#         jaxoplanet = [f"data/flux_jaxoplanet_500_{order}.npz" for order in error_orders]
-#     output:
-#         "figures/error_rb.png"
-#     params:
-#         orders=error_orders
-#     script:
-#         "scripts/plot_error_rb.py"
-
-# rule plot_time_n:
-#     input:
-#         starry_1000 = "data/flux_starry_1000.npz",
-#         jaxoplanet_1000 = [f"data/flux_jaxoplanet_1000_{order}.npz" for order in time_orders],
-#     output:
-#         "figures/error_vs_time.pdf"
-#     params:
-#         orders=time_orders
-#     script:
-#         "scripts/plot_error_vs_time.py"
-
-# rule plot_time_NN:
-#     input:
-#         starry = [f"data/flux_starry_{N}.npz" for N in Ns],
-#         jaxoplanet = [f"data/flux_jaxoplanet_{N}_200.npz" for N in Ns]
-#     output:
-#         "figures/points_vs_time.pdf"
-#     params:
-#         Ns=Ns
-#     script:
-#         "scripts/plot_points_vs_time.py"

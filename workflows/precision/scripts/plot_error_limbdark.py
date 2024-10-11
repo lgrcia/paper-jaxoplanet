@@ -12,14 +12,14 @@ q_order = int(snakemake.params.order)
 data = {
     "small": {
         "jax": np.load(snakemake.input.jax[0], allow_pickle=True)["f"],
-        "jax_nu": np.load(snakemake.input.jax_nu[0], allow_pickle=True)["f"],
+        "jax_nu": np.load(snakemake.input.jax_ld[0], allow_pickle=True)["f"],
         "num": np.load(snakemake.input.num[0], allow_pickle=True)["f"],
         "starry": np.load(snakemake.input.starry[0], allow_pickle=True)["f"],
         "exo": np.load(snakemake.input.exo[0], allow_pickle=True)["f"],
     },
     "large": {
         "jax": np.load(snakemake.input.jax[1], allow_pickle=True)["f"],
-        "jax_nu": np.load(snakemake.input.jax_nu[0], allow_pickle=True)["f"],
+        "jax_nu": np.load(snakemake.input.jax_ld[1], allow_pickle=True)["f"],
         "num": np.load(snakemake.input.num[1], allow_pickle=True)["f"],
         "starry": np.load(snakemake.input.starry[1], allow_pickle=True)["f"],
         "exo": np.load(snakemake.input.exo[1], allow_pickle=True)["f"],
@@ -40,7 +40,7 @@ err = {
     },
     "large": {
         "jax": errors(data["large"]["jax"], data["large"]["num"]).max(1)[1:],
-        "jax_nu": errors(data["small"]["jax_nu"], data["small"]["num"]).max(1)[1:],
+        "jax_nu": errors(data["large"]["jax_nu"], data["large"]["num"]).max(1)[1:],
         "starry": errors(data["large"]["starry"], data["large"]["num"]).max(1)[1:],
         "exo": errors(data["large"]["exo"], data["large"]["num"][0:3, :]).max(1)[1:],
     },
