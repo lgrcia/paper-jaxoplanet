@@ -2,7 +2,7 @@ from exoplanet.light_curves import LimbDarkLightCurve
 import numpy as np
 from time import time
 
-radius = snakemake.params.radius
+radius = float(snakemake.wildcards.radius)
 u = snakemake.params.u
 N = int(snakemake.wildcards.N)
 assert radius < 1

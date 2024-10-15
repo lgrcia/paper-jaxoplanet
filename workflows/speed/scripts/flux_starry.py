@@ -7,14 +7,15 @@ import theano.tensor as tt
 starry.config.lazy = True
 
 
-radius = snakemake.params.radius
+radius = float(snakemake.wildcards.radius)
 u = snakemake.params.u
 N = int(snakemake.wildcards.N)
 assert radius < 1
 b = np.linspace(0, 1 + radius, N)
+lmax = snakemake.wildcards.lmax
+lmax = None if lmax == "None" else int(lmax)
 
-
-if u is not None:
+if lmax is None:
     ms = starry.Map(ydeg=len(u), udeg=len(u))
     ms[1:] = u
 else:
