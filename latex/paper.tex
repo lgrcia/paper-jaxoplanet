@@ -286,7 +286,20 @@ Note how, unlike in the \textsf{starry} implementation, the term $\mu=1$, $l=1$ 
 Because of its numerical integration, the precision of the $\mathcal{P}$ integral is limited and depends on the order $q$ of the Gauss-Legendre quadrature, which corresponds to the number of point for which the integrand is evaluated. To minimize this number, we note that all integrands are symmetrical functions, except for $\mu=1$ and $l=1$. Hence, all integrals can be computed over the interval $\left[0, \frac{\kappa}{2}\right]$, instead of $\left[-\frac{\kappa}{2}, \frac{\kappa}{2}\right]$, and multiplied by 2. We also note that all terms for which $\frac{\mu}{2}$ is even reach machine precision for an integration order as low as $q=20$, that we hold fix. With these optimizations, we benchmark the precision and speed of our final implementation for the solution vector in \autoref{performance}.
 
 \subsection{Kepler's equation solver}
-\todo{}
+A core difference between our implementation and that of \cite{starry} and \cite{exoplanet} lies in the method used to solve Kepler's equation
+\begin{equation}
+    M = E - e \sin(E)
+\end{equation}
+Indeed, iterative methods used in previous implementations (such as \citealt{Raposo2017} and \citealt{Brandt2021}) cannot be easily implemented in \textsf{JAX} and are not extensible to GPU or TPU acceleration. Instead, our implementation makes use of \cite{Markley1995} which leads to state-of-the-art precision and runtime performance.\\\\
+Although JAX features automatic differentiation, we find that explicitly implementing the derivatives of the Kepler equation solver is more efficient. To do so, we use the implicit function theorem to derive the “Jacobian-vector product” required by \textsf{JAX} to specify custom derivatives. This is done by differentiating Kepler's equation as
+\begin{equation}
+    \mathrm{d}M = \mathrm{d}E\,(1 - e \cos E) - \mathrm{d}e\;\sin E,
+\end{equation}
+which leads to
+\begin{equation}
+\mathrm{d}E = \frac{1}{1 - e \cos E}\;\mathrm{d}M + \frac{\sin E}{1 - e \cos E}\;\mathrm{d}e.
+\end{equation}
+Then, for a given value of $E$, its derivatives can be easily evaluated. We find that this method is 6 times faster than using \textsf{JAX}'s automatic differentiation\footnote{Test performed on an M2 Max Macbook.}.\\\\
 \subsection{Light curve functions and transformations}
 \todo{}
 
