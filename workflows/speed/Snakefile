@@ -94,11 +94,11 @@ hd_order = 10
 rule plot_error_vs_N_realistic:
     input:
         jaxoplanet_quadratic = [f"data/flux_jaxoplanet_None_{N}_{trappist_order}_{trappist_radius}.npz" for N in Ns],
-        jaxoplanet_quadratic_gpu = [f"data/flux_jaxoplanet_None_{N}_{trappist_order}_{trappist_radius}.npz" for N in Ns],
+        jaxoplanet_quadratic_gpu = [f"static/gpu_single_core/flux_jaxoplanet_None_{N}_{trappist_order}_{trappist_radius}.npz" for N in Ns],
         exoplanet_quadratic = [f"data/flux_exoplanet_{N}_{trappist_radius}.npz" for N in Ns],
         starry_l3 = [f"data/flux_starry_3_{N}_{trappist_radius}.npz" for N in Ns],
         jaxoplanet_l3 = [f"data/flux_jaxoplanet_3_{N}_{hd_order}_{trappist_radius}.npz" for N in Ns],
-        jaxoplanet_l3_gpu = [f"data/flux_jaxoplanet_3_{N}_{hd_order}_{trappist_radius}.npz" for N in Ns]
+        jaxoplanet_l3_gpu = [f"static/gpu_single_core/flux_jaxoplanet_3_{N}_{hd_order}_{trappist_radius}.npz" for N in Ns]
     output:
         "figures/speed_vs_N_realistic.pdf"
     params:
