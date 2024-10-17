@@ -2,7 +2,7 @@
 Gauss-Legendre quadrature, and spherical harmonic degrees.
 """
 
-from jaxoplanet.experimental.starry import Ylm
+from jaxoplanet.starry import Ylm
 import matplotlib.pyplot as plt
 import numpy as np
 

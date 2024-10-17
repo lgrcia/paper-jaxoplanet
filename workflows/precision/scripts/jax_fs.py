@@ -2,10 +2,10 @@ import jax
 
 jax.config.update("jax_enable_x64", True)
 
-from jaxoplanet.experimental.starry.solution import solution_vector
-from jaxoplanet.experimental.starry.light_curves import surface_light_curve
-from jaxoplanet.experimental.starry.surface import Surface
-from jaxoplanet.experimental.starry.ylm import Ylm
+from jaxoplanet.starry.solution import solution_vector
+from jaxoplanet.starry.light_curves import surface_light_curve
+from jaxoplanet.starry.surface import Surface
+from jaxoplanet.starry.ylm import Ylm
 import numpy as np
 import jax.numpy as jnp
 from functools import partial

@@ -2,8 +2,8 @@ import jax
 
 jax.config.update("jax_enable_x64", True)
 
-from jaxoplanet.experimental.starry import Surface
-from jaxoplanet.experimental.starry.light_curves import surface_light_curve
+from jaxoplanet.starry import Surface
+from jaxoplanet.starry.light_curves import surface_light_curve
 import numpy as np
 from tqdm import tqdm
 

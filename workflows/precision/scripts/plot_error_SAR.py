@@ -3,8 +3,8 @@ import jax
 jax.config.update("jax_enable_x64", True)
 
 import numpy as np
-from jaxoplanet.experimental.starry.multiprecision import mp
-from jaxoplanet.experimental.starry.multiprecision.utils import diff_mp, to_numpy
+from jaxoplanet.starry.multiprecision import mp
+from jaxoplanet.starry.multiprecision.utils import diff_mp, to_numpy
 
 l_max = snakemake.params.l_max
 

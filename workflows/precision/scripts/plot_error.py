@@ -9,8 +9,8 @@ jax.config.update("jax_enable_x64", True)
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 import numpy as np
-from jaxoplanet.experimental.starry.ylm import Ylm
-from jaxoplanet.experimental.starry.multiprecision import mp, utils
+from jaxoplanet.starry.ylm import Ylm
+from jaxoplanet.starry.multiprecision import mp, utils
 
 ref = "num"
 comp = "comp"
@@ -106,7 +106,7 @@ l_max = snakemake.params.l_max
 
 cmap = plt.get_cmap("plasma")
 
-fig = plt.figure(constrained_layout=True, figsize=(8.0, 7))
+fig = plt.figure(constrained_layout=True, figsize=(8.0, 6))
 
 N = 8
 gs = gridspec.GridSpec(3, N, figure=fig, height_ratios=[1, 2, 2])

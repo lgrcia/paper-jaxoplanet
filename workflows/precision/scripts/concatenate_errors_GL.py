@@ -4,7 +4,7 @@ jax.config.update("jax_enable_x64", True)
 
 import numpy as np
 import matplotlib.pyplot as plt
-from jaxoplanet.experimental.starry.multiprecision import utils, mp
+from jaxoplanet.starry.multiprecision import utils, mp
 from tqdm import tqdm
 
 rs = snakemake.params.rs

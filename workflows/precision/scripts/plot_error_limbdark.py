@@ -4,7 +4,7 @@ jax.config.update("jax_enable_x64", True)
 
 import matplotlib.pyplot as plt
 import numpy as np
-from jaxoplanet.experimental.starry.multiprecision import mp, utils
+from jaxoplanet.starry.multiprecision import mp, utils
 
 degree = snakemake.params.degree
 q_order = int(snakemake.params.order)

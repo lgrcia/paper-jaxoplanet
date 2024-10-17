@@ -5,16 +5,16 @@ jax.config.update("jax_enable_x64", True)
 
 import starry
 import numpy as np
-from jaxoplanet.experimental.starry.multiprecision import mp
-from jaxoplanet.experimental.starry.basis import A1, A2_inv
+from jaxoplanet.starry.multiprecision import mp
+from jaxoplanet.starry.core.basis import A1, A2_inv
 import jax.numpy as jnp
-from jaxoplanet.experimental.starry.s2fft_rotation import compute_rotation_matrices
-from jaxoplanet.experimental.starry.multiprecision.rotation import R
+from jaxoplanet.starry.s2fft_rotation import compute_rotation_matrices
+from jaxoplanet.starry.multiprecision.rotation import R
 
-from jaxoplanet.experimental.starry.solution import solution_vector
-from jaxoplanet.experimental.starry.multiprecision.solution import sT
-from jaxoplanet.experimental.starry.multiprecision.utils import to_numpy
-from jaxoplanet.experimental.starry.multiprecision import basis as mbasis
+from jaxoplanet.starry.solution import solution_vector
+from jaxoplanet.starry.multiprecision.solution import sT
+from jaxoplanet.starry.multiprecision.utils import to_numpy
+from jaxoplanet.starry.multiprecision import basis as mbasis
 
 starry.config.lazy = False
 

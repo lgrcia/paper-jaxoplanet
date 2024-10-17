@@ -5,8 +5,8 @@ jax.config.update("jax_enable_x64", True)
 
 from exoplanet.light_curves import LimbDarkLightCurve
 from jaxoplanet.core.limb_dark import light_curve
-from jaxoplanet.experimental.starry.light_curves import surface_light_curve
-from jaxoplanet.experimental.starry import Surface, Ylm
+from jaxoplanet.starry.light_curves import surface_light_curve
+from jaxoplanet.starry import Surface, Ylm
 import numpy as np
 import starry
 from tqdm import tqdm
@@ -20,9 +20,9 @@ b = 1 - radius
 orders = snakemake.params.orders
 y_20 = np.ones(21**2)
 
-from jaxoplanet.experimental.starry.multiprecision.flux import flux_function
-from jaxoplanet.experimental.starry.multiprecision import mp, utils
-from jaxoplanet.experimental.starry.basis import U
+from jaxoplanet.starry.multiprecision.flux import flux_function
+from jaxoplanet.starry.multiprecision import mp, utils
+from jaxoplanet.starry.core.basis import U
 
 f_q = flux_function(3**2, mp.pi / 2, 0.0)
 y_q = mp.matrix([[1.0, 0.1, 0.1]]) @ utils.to_mp(U(2))

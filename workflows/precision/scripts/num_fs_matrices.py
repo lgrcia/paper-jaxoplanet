@@ -1,8 +1,8 @@
 l_max = snakemake.params.l_max
 
-from jaxoplanet.experimental.starry.multiprecision import mp
-from jaxoplanet.experimental.starry.multiprecision.basis import A1, A2
-from jaxoplanet.experimental.starry.multiprecision.rotation import get_R
+from jaxoplanet.starry.multiprecision import mp
+from jaxoplanet.starry.multiprecision.basis import A1, A2
+from jaxoplanet.starry.multiprecision.rotation import get_R
 from collections import defaultdict
 
 inc = mp.pi / 2

@@ -1,7 +1,7 @@
 import pickle
 import numpy as np
 from tqdm import tqdm
-from jaxoplanet.experimental.starry.multiprecision import mp
+from jaxoplanet.starry.multiprecision import mp
 
 flux = []
 s = []

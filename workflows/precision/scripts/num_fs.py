@@ -1,6 +1,6 @@
 import numpy as np
-from jaxoplanet.experimental.starry.multiprecision import mp
-from jaxoplanet.experimental.starry.multiprecision.flux import flux_function
+from jaxoplanet.starry.multiprecision import mp
+from jaxoplanet.starry.multiprecision.flux import flux_function
 
 r = float(snakemake.wildcards.r)
 l_max = snakemake.params.l_max

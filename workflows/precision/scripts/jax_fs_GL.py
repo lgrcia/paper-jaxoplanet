@@ -3,14 +3,14 @@ import jax
 
 jax.config.update("jax_enable_x64", True)
 
-from jaxoplanet.experimental.starry.solution import solution_vector
-from jaxoplanet.experimental.starry.light_curves import *
+from jaxoplanet.starry.solution import solution_vector
+from jaxoplanet.starry.light_curves import *
 import numpy as np
 import jax.numpy as jnp
-from jaxoplanet.experimental.starry.solution import rT
-from jaxoplanet.experimental.starry.mpcore.basis import A1
-from jaxoplanet.experimental.starry.basis import A2_inv
-from jaxoplanet.experimental.starry.mpcore.utils import to_numpy
+from jaxoplanet.starry.solution import rT
+from jaxoplanet.starry.mpcore.basis import A1
+from jaxoplanet.starry.core.basis import A2_inv
+from jaxoplanet.starry.mpcore.utils import to_numpy
 
 
 def jax_flux(deg, order=20, inc=np.pi / 2, obl=0.0):

@@ -4,8 +4,8 @@ jax.config.update("jax_platform_name", "cpu")
 jax.config.update("jax_enable_x64", True)
 
 import numpy as np
-from jaxoplanet.experimental.starry import Surface, Ylm
-from jaxoplanet.experimental.starry.light_curves import surface_light_curve
+from jaxoplanet.starry import Surface, Ylm
+from jaxoplanet.starry.light_curves import surface_light_curve
 from time import time
 
 radius = float(snakemake.wildcards.radius)

@@ -15,7 +15,7 @@
 \keywords{}
 
 \begin{abstract}
-    Modeling light curves of extrasolar systems serves a wide variety of science cases. Transit and occultation light curves, for example, are used to characterize their orbital configuration, and infer the atmospheric properties of their transiting bodies. Phase curves, on the other hand, can be used to study the thermal emission of exoplanets, and the atmospheric circulation of stars. In order to infer these properties, a fast, accurate and robust model of stellar light curves is needed, one that accounts for the non-uniform surface intensity of spherical bodies and their mutual occultations. In this context, the analytical framework known as \textsf{starry} provided the community with a powerful tool, instrumental in .... However, as datasets and models complexity grow, the tractable inference of these parameters becomes increasingly challenging, and often motivates biased approximations. In this paper, we present a new implementation of the \textsf{starry} framework in \texttt{jax}, a high-performance machine-learning library designed for large-scale computations. We describe the changes made to the original version of \textsf{starry} and evaluate the performance of its new implementation that we release in the open-source Python package \textsf{jaxoplanet}. Through this implementation, we provide the community with a differentiable model of stellar light curves, and enable the use of powerful machine-learning tools available in the \textsf{JAX} ecosystem. \gitlink{}
+    Modeling light curves of celestial bodies serves a wide variety of science cases. From the orbital characterization of stellar systems to the study of exoplanet and stellar atmospheres. In this context, the analytical framework known as \textsf{starry} provided the community with a powerful tool to analytically compute light curves of bodies with non-uniform intensities. However, as datasets and models complexity grow, the tractable inference of their physical parameters becomes increasingly challenging, and often motivates biased approximations. In this paper, we present a new implementation of the \textsf{starry} framework in \textsf{JAX}, a high-performance machine-learning library designed for large-scale computations. We describe the changes made to the original version of \textsf{starry} and evaluate the performance of its new implementation that we release in the open-source Python package \textsf{jaxoplanet}. Through this implementation, we provide the community with a differentiable model of stellar light curves, and enable the use of powerful machine-learning tools available in the \textsf{JAX} ecosystem. \gitlink{}
 
 \end{abstract}
 
@@ -91,7 +91,6 @@ We notice that a simpler situation is encountered when the surface of the spheri
 For these reasons, and because of its wide application, our implementation treats radially-symmetric maps separately, leading to highly optimize computations of limb-darkened light curves.\\\\
 
 
-\newpage
 \section{Implementation details}\label{optimization}
 The formalism introduced by \cite{starry}, summarized in \autoref{starry}, provides an elegant analytical model of stellar light curves. Implemented in C++ and released in the \texttt{starry} Python package, it was built for the probabilistic programming library \textsf{PyMC3} and led to several advances in the field of exoplanetary science. However, since its initial development, the \textsf{PyMC} project adopted several breaking changes that made \textsf{starry} incompatible with its latest versions. Updating \textsf{starry} to the latest version of \textsf{PyMC} would require a complete rewriting of the code, that would again be highly dependent on the latter. Hence, our first motivation comes from the broken dependencies of \textsf{starry} and aims to provide the community with an implementation compatible with a wider ecosystem of tools. In this respect \textsf{JAX} represents an interesting alternative. This high-performance machine-learning library can be used to perform hardware-accelerated computations on various type of devices (CPU, GPU, TPU) and gave rise to probabilistic tools developped by an ever-growing community of scientists and engineers. However, \textsf{JAX} capabilities really shine when models are written with a functional-programming mindset, and computations performed in a vectorized way.\\\\
 In this section, we describe the changes made to the original \textsf{starry} implementation to allow its rewriting in \textsf{JAX}. We also highlight details about the latest version of \textsf{starry}'s original implementation that were omitted in \citealt{starry} but described in parts of its code and documentation. 
@@ -291,17 +290,24 @@ A core difference between our implementation and that of \cite{starry} and \cite
     M = E - e \sin(E)
 \end{equation}
 Indeed, iterative methods used in previous implementations (such as \citealt{Raposo2017} and \citealt{Brandt2021}) cannot be easily implemented in \textsf{JAX} and are not extensible to GPU or TPU acceleration. Instead, our implementation makes use of \cite{Markley1995} which leads to state-of-the-art precision and runtime performance.\\\\
-Although JAX features automatic differentiation, we find that explicitly implementing the derivatives of the Kepler equation solver is more efficient. To do so, we use the implicit function theorem to derive the “Jacobian-vector product” required by \textsf{JAX} to specify custom derivatives. This is done by differentiating Kepler's equation as
+Although JAX features automatic differentiation, we find that explicitly implementing the derivatives of the Kepler equation solver is more efficient. To do so, we use the implicit function theorem to derive the \textit{Jacobian-vector product} required by \textsf{JAX} to specify custom derivatives. This is done by differentiating Kepler's equation as
 \begin{equation}
     \mathrm{d}M = \mathrm{d}E\,(1 - e \cos E) - \mathrm{d}e\;\sin E,
 \end{equation}
 which leads to
 \begin{equation}
-\mathrm{d}E = \frac{1}{1 - e \cos E}\;\mathrm{d}M + \frac{\sin E}{1 - e \cos E}\;\mathrm{d}e.
+\mathrm{d}E = \frac{1}{1 - e \cos E}\;\mathrm{d}M + \frac{\sin E}{1 - e \cos E}\;\mathrm{d}e,
 \end{equation}
-Then, for a given value of $E$, its derivatives can be easily evaluated. We find that this method is 6 times faster than using \textsf{JAX}'s automatic differentiation\footnote{Test performed on an M2 Max Macbook.}.\\\\
+so that point estimates for the derivatives of $E$ can be easily evaluated. We find that this method is 6 times faster than using \textsf{JAX}'s automatic differentiation\footnote{Test performed on an M2 Max Macbook.}.\\\\
 \subsection{Light curve functions and transformations}
-\todo{}
+Using all the optimizations described in the previous sections, the \textsf{jaxoplanet} Python package provides code to compute light curves of mutually occulting celestial bodies. Our implementation is written in \textsf{JAX} and contains fully vectorized light curve functions that can be compiled and run on several hardware accelerator. 
+\begin{itemize}
+    \item The \texttt{jaxoplanet.light\_curves.limbdark} module contains functions to compute  occultation light curves of limb darkened stars described by polynomial limb darkening laws \citep{Agol2020}.
+    \item The \texttt{jaxoplanet.light\_curves.emission} module contains functions to compute light curves of emissive limb darkened bodies. This module usess the same formalism as the \texttt{limbdark} module, but allows for secondary ecclipses to be computed.
+    \item The \texttt{jaxoplanet.starry.light\_curves} module contains functions to compute occultation light curve of bodies with non-uniform surfaces \citep{starry}.
+\end{itemize}
+These functions can optionally be transformed using special wrappers provided in the \texttt{jaxoplanet.light\_curves.transforms}  module. For example, the \texttt{integrate} transform enables the computation of light curves observed at finite exposure time, using the methods described in \cite{Kipping2010}\footnote{See tutorial at}. Additionlly, the \texttt{interpolate} transform can be used to precompute light curves on a grid near a transit, and then interpolate those computations to the required phases when computing the full model, leading to substantial speed ups when several transits are present in the data.\\\\
+By providing the community with an alternative to \textsf{starry} entirely written in Python, we hope to foster the development of new tools and methods to model light curves from stellar and planetary systems. In the next section, we evaluate the performance of our implementation and compare it with the original \textsf{starry} implementation.\\\\
 
 \section{Performance}\label{performance}
 Although occultation light curves have analytical expressions, their practical implementation relies on numerical approximations chosen to balance precision and computation time. This is the case for the solution vector $\bvec{s}^\mathsf{T}$, computed using numerical series expansions in \textsf{starry} (\citealt[section D.2.3]{starry}) and numerical integration in \textsf{jaxoplanet} (see \autoref{solution_vector}). Other expressions, such as the Wigner-D matrices used in the rotation of the spherical harmonics basis, are computed using reccurence relations prone to the accumulation of numerical errors and instability.\\\\
@@ -309,7 +315,6 @@ In this section, we evaluate the accuracy and speed of the \textsf{jaxoplanet} i
 
 \subsection{Precision}\label{precision}
 We evaluate the precision of the \textsf{starry} and \textsf{jaxoplanet} terms against quantities computed at arbitrary precision, using a ground truth version of the code implemented with the \texttt{mpmath} Python library\footnote{\href{https://mpmath.org/}{https://mpmath.org/}}. The precision of the overall flux $f$ can only be understood by considering the precision of the terms involved in \autoref{eq:starry}: the solution vector $\bvec{s}^\mathsf{T}$ ($\bvec{r}^\mathsf{T}$ if no occultation), the change of basis matrices $\bvec{A_1}$ and $\bvec{A_2}$, and the Wigner-D rotation matrix $\bvec{R}$. Although we show in \autoref{fig:precision_SAR} that the precision of the \textsf{starry} and \textsf{jaxoplanet} implentations slightly differ for many of these terms, we focus this section on the solution vector $\bvec{s}^\mathsf{T}$ and the overall flux $f$.\\\\
-Assuming that we perform the numerical integration described in \autoref{solution_vector} at a relatively high order $q=500$, \autoref{fig:precision_s} shows that our reimplentation of \textsf{starry} reaches relative errors lower than 1 part per billion for $\bvec{s}^\mathsf{T}$ and the overall flux $f$, for almost all degrees up to $l_{max}=20$ and considering both a small ($r=0.01$) and a large ($r=100$) occultor transiting the star accross numerically-sensitive values of impact parameters $b$. For reference, \autoref{fig:precision_s_starry} shows comparable errors on the same quantities computed with the C++ implentation of \textsf{starry}. 
 \begin{figure}[H]
     \begin{center}
         \includegraphics[width=\textwidth]{../workflows/precision/figures/error_jax.pdf}
@@ -317,6 +322,7 @@ Assuming that we perform the numerical integration described in \autoref{solutio
         \label{fig:precision_s}
     \end{center}
 \end{figure}
+Assuming that we perform the numerical integration described in \autoref{solution_vector} at a relatively high order $q=500$, \autoref{fig:precision_s} shows that our reimplentation of \textsf{starry} reaches relative errors lower than 1 part per billion for $\bvec{s}^\mathsf{T}$ and the overall flux $f$, for almost all degrees up to $l_{max}=20$ and considering both a small ($r=0.01$) and a large ($r=100$) occultor transiting the star accross numerically-sensitive values of impact parameters $b$. For reference, \autoref{fig:precision_s_starry} shows comparable errors on the same quantities computed with the C++ implentation of \textsf{starry}. \\\\
 In addition, \autoref{fig:precision_degree} shows the evolution of the error on $f$ for increasing degrees of the spherical harmonics for \textsf{starry} and \textsf{jaxoplanet}.
 \begin{figure}[H]
     \begin{center}
@@ -325,7 +331,6 @@ In addition, \autoref{fig:precision_degree} shows the evolution of the error on 
         \label{fig:precision_degree}
     \end{center}
 \end{figure}
-In \autoref{fig:precision_limbdark}, we compare the precision of our limb darkened light curve model with that of the \textsf{exoplanet} Python package (which uses the same formalism as \cite{Agol2020} but limited to linear and quadratic limb darkening). The larger errors observed in this figure are due to the transformation of the polynomial limb darkening coefficients to the spherical harmonics coefficients. For example, a set of unitary polynomial limb darkening coefficients of order 20 leads to spherical harmonics coefficients as large as $10^6$. We note that these errors scale with the values of $\bvec{u}$.\\\\
 \begin{figure}[H]
     \begin{center}
         \includegraphics[width=\textwidth]{../workflows/precision/figures/limbdark_error.PDF}
@@ -333,7 +338,8 @@ In \autoref{fig:precision_limbdark}, we compare the precision of our limb darken
         \label{fig:precision_limbdark}
     \end{center}
 \end{figure}
-As described in \autoref{solution_vector}, we compute occultation light curves using the Gauss Legendre quadrature to approximate the $\mathcal{P}$ integral involved in the expression of the solution vector $\bvec{s}^\mathsf{T}$. Hence, the precision of the computed flux $f$ depends on the order of the Legendre polynomial which defines the number of points used to approximate $\mathcal{P}$ (see \autoref{fig:relative_error_1}).Hence, users must carefully set the order parameter to balance precision and computational speed (see \autoref{speed}).
+In \autoref{fig:precision_limbdark}, we compare the precision of our limb darkened light curve model with that of the \textsf{exoplanet} Python package (which uses the same formalism as \cite{Agol2020} but limited to linear and quadratic limb darkening). The larger errors observed in this figure are due to the transformation of the polynomial limb darkening coefficients to the spherical harmonics coefficients. For example, a set of unitary polynomial limb darkening coefficients of order 20 leads to spherical harmonics coefficients as large as $10^6$. We note that these errors scale with the values of $\bvec{u}$.\\\\
+As described in \autoref{solution_vector}, we compute occultation light curves using the Gauss Legendre quadrature to approximate the $\mathcal{P}$ integral involved in the expression of the solution vector $\bvec{s}^\mathsf{T}$. Hence, the precision of the computed flux $f$ depends on the order of the Legendre polynomial which defines the number of points used to approximate $\mathcal{P}$ (see \autoref{fig:relative_error_1}, or  \autoref{fig:precision_order_gausslegendre_degree} in the Appendix to see the effect for different spherical harmonics degrees $l$). Hence, users must carefully set the order parameter $q$ to balance precision and computational speed (see \autoref{speed}).
 \begin{figure}[H]
     \begin{center}
         \includegraphics[width=\textwidth]{../workflows/precision/figures/br_error.png}
@@ -355,16 +361,16 @@ With the results of this section, we validate the precision of \textsf{jaxoplane
 \subsection{Speed}\label{speed}
 
 One of the advantage of the \textsf{JAX} library is its ability to perform hardware-accelerated computations on CPUs and GPUs. In this section, we evaluate the speed of the \textsf{jaxoplanet} implementation and compare it with the C++ implementation of \textsf{starry}. For quadratically limb darkened light curves, we also compare our implementation with the one provided by the \textsf{exoplanet} Python package.\\\\
-While performing numerical integration may seem as the downside of our implementation, adapting the value of $q$ to the precision required for specific applications allows users to optimize the computation time of the model to their advantage. To demonstrate this point, we first consider the transmission spectroscopy of TRAPPIST-1 b performed with the JWST/NIRISS instrument (GO-2589, \citealt{Lim2023}). These observations reached an estimated precision of 89 ppm for a planet with a relative radius of the order $r\sim0.1$. In this context, numerical integration with an order as low as $q=10$ guarantees that our model reaches a precision of $10^{-16}$, an execution time on par with \textsf{exoplanet} on CPU and up to an order of magnitude faster on GPU for large datasets (see left plot of \autoref{fig:real_benchmark}). The second example we consider is the secondary ecclipse mapping of HD 189733b ($r\sim0.3$) using Spitzer's 8 micron channel \citep{majeau2012} obtained at a precision of about 1 ppt. For a spherical harmonics map of degree $l_{max}=3$ (although $l_{max}=1$ is enough in this case), $q=10$ guarantees a model with a precision of $10^{-10}$, an execution time one order of magnitude faster than \textsf{starry} on CPU and up to two orders of magnitude faster on GPU for large datasets (see right plot of \autoref{fig:real_benchmark}).\\\\
+While performing numerical integration may be seen as a downside in our implementation, adapting the value of $q$ to the precision required for specific applications allows users to optimize the computation time of the model to their advantage. To demonstrate this point, we first consider the transmission spectroscopy of TRAPPIST-1 b performed with the JWST/NIRISS instrument (GO-2589, \citealt{Lim2023}). These observations reached an estimated precision of 89 ppm for a planet with a relative radius of the order $r\sim0.1$. In this context, numerical integration with an order as low as $q=10$ guarantees that our model reaches a precision of $10^{-16}$, an execution time on par with \textsf{exoplanet} on CPU and up to an order of magnitude faster on GPU for large datasets (see left plot of \autoref{fig:real_benchmark}). The second example we consider is the secondary ecclipse mapping of HD189733 b ($r\sim0.3$) using Spitzer's 8 micron channel \citep{majeau2012} obtained at a precision of about 1 ppt. For a spherical harmonics map of degree $l_{max}=3$, $q=10$ guarantees a model with a precision of $10^{-10}$, an execution time one order of magnitude faster than \textsf{starry} on CPU and up to two orders of magnitude faster on GPU for large datasets (see right plot of \autoref{fig:real_benchmark}).\\\\
 \begin{figure}[H]
     \begin{center}
         \includegraphics[width=\textwidth]{../workflows/speed/figures/speed_vs_N_realistic.pdf}
-        \caption{}
+        \caption{Evaluation time versus number of points for different light curves models used in realistic applications. On the left, we evaluate the time required by \textsf{jaxoplanet} and \textsf{exoplanet} to compute the quadratically limb darkened transit light curve of TRAPPIST-1 b observed with the JWST/NIRISS instrument (for which $q=10$ yields machine precision). On the right we evaluate the time required by \textsf{jaxoplanet} and \textsf{starry} to compute the eclipse light curve of HD189733 b whose surface is modeled using spherical harmonics of degree $l_{max}=3$ (with $q=10$ leading to a precision of $10^{-10}$). On CPU, our benchmark is done on the single core of an Apple M2 max chip, while on GPU we use the single core of an NVIDIA Tesla V100 processor.}
         \label{fig:real_benchmark}
     \end{center}
 \end{figure}
 
-In general, we show that models computed at low values of $q$, which are very fast, match the precision of measurements from modern instruments. Although this might not be required, \autoref{precise_speed} shows reference speed benchmarks for models evaluated at state-of-the-art precision.\\\\
+In general, we show that models computed at low values of $q$, which are very fast, match the precision of measurements from modern instruments. Although this might not be required, \autoref{precise_speed} shows reference speed benchmarks for models evaluated at state-of-the-art precisions.\\\\
 In order to help users set the value of $q$ according to their required precision, the \textsf{jaxoplanet} Python package provide helper functions to estimate the precision of the light curve model given the relative radius $r$, the spherical harmonics degree $l_{max}$ (if general non-uniform maps are required), and the order of the polynomial limb darkening law\footnote{See tutorial at \href{}{}}.\\\\
 
 \section{Conclusion}
@@ -377,15 +383,15 @@ The \textsf{jaxoplanet} code is open source under the MIT License and is hosted 
 
 \appendix
 
-\section{Precision}\label{precise_precision}
+\section{Additional precision benchmarks}\label{precise_precision}
+This section contains additional figures showing the precision of the \textsf{jaxoplanet} implementation and its comparison to the C++ implementation of \textsf{starry}.
 \begin{figure}[H]
     \begin{center}
         \includegraphics[width=\textwidth]{../workflows/precision/figures/error_SAR.pdf}
-        \caption{Typical errors in the matrices used to compute the flux (\autoref{eq:starry}) with \textsf{starry} and \textsf{jaxoplanet}. \codelink{workflows/precision/scripts/plot_error_SAR}}
+        \caption{Typical errors in the matrices involved in the computation of the flux from \autoref{eq:starry}. \codelink{workflows/precision/scripts/plot_error_SAR}}
         \label{fig:precision_SAR}
     \end{center}
 \end{figure}
-
 \begin{figure}[H]
     \begin{center}
         \includegraphics[width=\textwidth]{../workflows/precision/figures/error_starry.pdf}
@@ -393,11 +399,10 @@ The \textsf{jaxoplanet} code is open source under the MIT License and is hosted 
         \label{fig:precision_s_starry}
     \end{center}
 \end{figure}
-
 \begin{figure}[H]
     \begin{center}
         \includegraphics[width=\textwidth]{../workflows/precision/figures/error_order_degree.pdf}
-        \caption{Maximum errors in the overall flux $f$ for all degrees of the spherical harmonics components for different occultor radii and orders $q$ of the Gauss-Legendre quadrature used to compute the P integral (see \autoref{solution_vector}). Errors shown in this figure correspond to the maximum values of the scaled errors shown in \autoref{fig:precision_s}, maxima taken over the range of values $b$.}
+        \caption{Maximum errors in the overall flux $f$ for all degrees of the spherical harmonics components for different occultor radii and orders $q$ of the Gauss-Legendre quadrature used to compute the $\mathcal{P}$ integral (see \autoref{solution_vector}). Errors shown in this figure correspond to the maximum values of the scaled errors shown in \autoref{fig:precision_s}, maxima taken over the range of values $b$.}
         \label{fig:precision_order_gausslegendre_degree}
     \end{center}
 \end{figure}
@@ -405,7 +410,7 @@ The \textsf{jaxoplanet} code is open source under the MIT License and is hosted 
 \section{Speed}\label{precise_speed}
 In \autoref{fig:speed_order_gausslegendre}, we show the evolution of the time required to compute the occultation light curve of a limb darkened star and that of a non-uniform star described by spherical harmonics of degree $l_{max}=20$, depending on the order $q$ of the numerical integration. On CPU, our benchmark is done on the single core of an Apple M2 max chip, while on GPU we use the single core of an NVIDIA Tesla V100 processor.\\\\
 \begin{figure}[H]
-    \begin{center}
+    \begin{center} 
         \includegraphics[width=\textwidth]{../workflows/speed/figures/speed_vs_order.pdf}
         \caption{Computation time of the occultation light curve of a limb-darkened star (left) and a non-uniform star described by spherical harmonics up to order $l_{max}=20$ (right) depending on the order $q$ of the Gauss-Legendre quadrature used to compute the $\mathcal{P}$ integral numerically (see \autoref{solution_vector}). The processing time reported for \textsf{exoplanet} and \textsf{starry} is independent of $q$ as these two codes provide closed-form solutions for the integral $\mathcal{P}$. Light curves are computed for $10\,000$ points in transit and an occultor radius $r=0.1$.}
         \label{fig:speed_order_gausslegendre}
@@ -419,7 +424,7 @@ Finally, \autoref{fig:speed_N} shows the evaluation time of \textsf{jaxoplanet} 
         \label{fig:speed_N}
     \end{center}
 \end{figure}
-These benchmarks are produced for values of $q$ which guarantee that our models reach the same precision as state-of-the-art codes. As discussed in \autoref{discussion}, \textsf{jaxoplanet} can be further optimized by reducing the order $q$ of numerical integration while keeping the precision required for specific applications.
+These benchmarks are produced for values of $q$ which guarantee that our models reach the same precision as state-of-the-art codes. As discussed in \autoref{speed}, \textsf{jaxoplanet} can be further optimized by reducing the order $q$ of numerical integration while keeping the precision required for specific applications.
 
 % Table of symbols
 

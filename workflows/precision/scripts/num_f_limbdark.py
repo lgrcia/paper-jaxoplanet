@@ -1,8 +1,8 @@
 import numpy as np
 import pickle
-from jaxoplanet.experimental.starry.multiprecision.utils import mp
-from jaxoplanet.experimental.starry import basis
-from jaxoplanet.experimental.starry.multiprecision import solution
+from jaxoplanet.starry.multiprecision.utils import mp
+from jaxoplanet.starry import basis
+from jaxoplanet.starry.multiprecision import solution
 from tqdm import tqdm
 
 # some params
