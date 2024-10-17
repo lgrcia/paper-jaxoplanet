@@ -8,7 +8,7 @@ import numpy as np
 from jaxoplanet.starry.multiprecision import mp
 from jaxoplanet.starry.core.basis import A1, A2_inv
 import jax.numpy as jnp
-from jaxoplanet.starry.s2fft_rotation import compute_rotation_matrices
+from jaxoplanet.starry.core.s2fft_rotation import compute_rotation_matrices
 from jaxoplanet.starry.multiprecision.rotation import R
 
 from jaxoplanet.starry.core.solution import solution_vector

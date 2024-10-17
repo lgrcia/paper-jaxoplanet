@@ -1,7 +1,9 @@
 import numpy as np
 
+RES = snakemake.params.resolution
 
-def b_range(r, logdelta=-3, logeps=-6, res=50):
+
+def b_range(r, logdelta=-3, logeps=-6, res=RES):
     delta = 10**logdelta
     eps = 10**logeps
     if r > 1:

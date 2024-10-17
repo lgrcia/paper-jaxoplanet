@@ -1,7 +1,5 @@
 import numpy as np
 
-l_max = 20
-
 radii = (0.01, 100) # small and large radii
 N = 500
 
@@ -12,16 +10,16 @@ n_max = (l_max + 1) ** 2
 ys = np.eye(n_max, n_max)
 ys[:, 0] = 1.0
 
-rule all:
-    input:
-        "figures/error_jax.pdf",
-        "figures/error_starry.pdf",
-        "figures/error_degree.pdf",
-        "figures/limbdark_error.pdf",
-        "figures/error_SAR.pdf",
-        # "figures/br_error.png",
-        "figures/error_order.pdf",
-        "figures/error_order_degree.pdf"
+# rule all:
+#     input:
+#         "figures/error_jax.pdf",
+#         "figures/error_starry.pdf",
+#         "figures/error_degree.pdf",
+#         "figures/limbdark_error.pdf",
+#         "figures/error_SAR.pdf",
+#         "figures/br_error.png",
+#         "figures/error_order.pdf",
+#         "figures/error_order_degree.pdf"
 
 
 # ERROR FOR DIFFERENT SPHERICAL HARMONIC DEGREES
@@ -29,6 +27,8 @@ rule all:
 
 rule b:
     output: "data/b_{r}.npz"
+    params:
+        resolution = b_sub_resolution,
     script: "scripts/make_b.py"
 
 rule num_fs_matrices:
@@ -51,7 +51,7 @@ rule num_fs:
     # (mpmath) Compute the flux for a given r and range of b, i is the index of 
     # the spherical harmonic component
     input: "data/b_{r}.npz", "data/num_fs_matrices.npz", "data/num_sT_{r}.npz"
-    output: "data/num_fs_{r}_{i}.npz"
+    output: "data/num_fs/num_fs_{r}_{i}.npz"
     params:
         l_max = l_max,
         y = lambda wildcards: ys[int(wildcards.i)]
@@ -62,8 +62,8 @@ rule concatenate_fs:
     # Concatenate the fluxes and s for all values of i
     input: 
         bs = "data/b_{r}.npz", 
-        i = [f"data/num_fs_{{r}}_{i}.npz" for i in range(n_max)],
-    output: "results/num_fs_{r}.npz"
+        i = [f"data/num_fs/num_fs_{{r}}_{i}.npz" for i in range(n_max)],
+    output: "data/num_fs_{r}.npz"
     script: "scripts/concatenate_fs.py"
 
 
@@ -71,7 +71,7 @@ rule jax_fs:
     # (jax) Compute the flux for a given r and range of b, i is the index of 
     # the spherical harmonic component
     input: "data/b_{r}.npz"
-    output: "results/jax_fs_r={r}_order={order}.npz"
+    output: "data/jax_fs_r={r}_order={order}.npz"
     params:
         l_max = l_max,
         ys = ys
@@ -81,7 +81,7 @@ rule starry_fs:
     # (starry) Compute the flux for a given r and range of b, i is the index of 
     # the spherical harmonic component
     input: "data/b_{r}.npz"
-    output: "results/starry_fs_{r}.npz"
+    output: "data/starry_fs_{r}.npz"
     params:
         l_max = l_max,
         ys = ys
@@ -91,8 +91,8 @@ rule starry_fs:
 rule plot_error_jax:
     # Plot the error in the flux and s as a function of b and the degree of the spherical harmonic
     input:
-        ref = [f"results/num_fs_{r}.npz" for r in radii],
-        comp = [f"results/jax_fs_r={r}_order=500.npz" for r in radii],
+        ref = [f"data/num_fs_{r}.npz" for r in radii],
+        comp = [f"data/jax_fs_r={r}_order=500.npz" for r in radii],
         b = [f"data/b_{r}.npz" for r in radii]
     params:
         l_max = l_max
@@ -103,8 +103,8 @@ rule plot_error_jax:
 rule plot_error_starry:
     # Plot the error in the flux and s as a function of b and the degree of the spherical harmonic
     input:
-        ref = [f"results/num_fs_{r}.npz" for r in radii],
-        comp = [f"results/starry_fs_{r}.npz" for r in radii],
+        ref = [f"data/num_fs_{r}.npz" for r in radii],
+        comp = [f"data/starry_fs_{r}.npz" for r in radii],
         b = [f"data/b_{r}.npz" for r in radii]
     params:
         l_max = l_max
@@ -115,9 +115,9 @@ rule plot_error_starry:
 rule plot_error_degree:
     # Plot the error in the flux and s as a function of b and the degree of the spherical harmonic
     input:
-        jax = [f"results/jax_fs_r={r}_order=250.npz" for r in radii],
-        num = [f"results/num_fs_{r}.npz" for r in radii],
-        starry = [f"results/starry_fs_{r}.npz" for r in radii]
+        jax = [f"data/jax_fs_r={r}_order=250.npz" for r in radii],
+        num = [f"data/num_fs_{r}.npz" for r in radii],
+        starry = [f"data/starry_fs_{r}.npz" for r in radii]
     params:
         l_max = l_max
     output: "figures/error_degree.pdf"
@@ -125,7 +125,7 @@ rule plot_error_degree:
 
 rule compute_SAR:
 # Compute the s, A and R matrices with jax, starry and mpmath (s and R only)
-    output: "results/SAR.npz"
+    output: "data/SAR.npz"
     params:
         l_max = l_max
     script: "scripts/SAR_jax_starry.py"
@@ -133,7 +133,7 @@ rule compute_SAR:
 
 rule plot_error_SAR:
     # Plot the error in the s, A and R matrices of jax and starry compared to mpmath
-    input: "data/num_fs_matrices.npz", "static/SAR.npz"
+    input: "data/num_fs_matrices.npz", "data/SAR.npz"
     output: "figures/error_SAR.pdf"
     params:
         l_max = l_max
@@ -150,14 +150,7 @@ rule br_f_jax:
     output: "data/jax_f_order_{order}.npz"
     script: "scripts/jax_br_flux.py"
 
-rule br_f_starry:
-    # Compute the flux in (b, r) space for different orders
-    input: f"data/br_dense_{N}.npz"
-    output: "data/starry_f_order.npz"
-    script: "scripts/starry_br_flux.py"
-
-
-rule br_plot:
+rule plot_br_error:
     # Plot error on the flux in (b, r) space for different orders
     input: 
         jaxoplanet = [f"data/jax_f_order_{order}.npz" for order in error_orders],
@@ -179,8 +172,8 @@ rule num_fs_limbdark:
     input: 
         b = "data/b_{r}.npz", 
         matrices = "data/num_fs_matrices.npz",
-        fs = "results/num_fs_{r}.npz"
-    output: "results/num_limbdark_f_{r}.npz"
+        fs = "data/num_fs_{r}.npz"
+    output: "data/num_limbdark_f_{r}.npz"
     params:
         degree = l_max
     script: "scripts/num_f_limbdark.py"
@@ -189,7 +182,7 @@ rule jax_fs_limbdark:
     # Compute the flux for a given r and range of b for a limb-darkened star
     # with polynomial law
     input: "data/b_{r}.npz"
-    output: "results/jax_limbdark_f_{r}.npz"
+    output: "data/jax_limbdark_f_{r}.npz"
     params:
         degree = l_max,
         order = limb_dark_q
@@ -199,7 +192,7 @@ rule jax_fs_nonuniform_limbdark:
     # Compute the flux for a given r and range of b for a limb-darkened star
     # with polynomial law
     input: "data/b_{r}.npz"
-    output: "results/jax_nonuniform_limbdark_f_{r}.npz"
+    output: "data/jax_nonuniform_limbdark_f_{r}.npz"
     params:
         degree = l_max,
         order = limb_dark_q
@@ -209,7 +202,7 @@ rule exoplanet_fs_limbdark:
     # Compute the flux for a given r and range of b for a limb-darkened star
     # with polynomial law
     input: "data/b_{r}.npz"
-    output: "results/exoplanet_limbdark_f_{r}.npz"
+    output: "data/exoplanet_limbdark_f_{r}.npz"
     params:
         degree = l_max
     script: "scripts/exoplanet_f_limbdark.py"
@@ -218,7 +211,7 @@ rule starry_fs_limbdark:
     # Compute the flux for a given r and range of b for a limb-darkened star
     # with polynomial law
     input: "data/b_{r}.npz"
-    output: "results/starry_limbdark_f_{r}.npz"
+    output: "data/starry_limbdark_f_{r}.npz"
     params:
         degree = l_max
     script: "scripts/starry_f_limbdark.py"
@@ -227,11 +220,11 @@ rule starry_fs_limbdark:
 rule plot_error_limbdark:
     # Plot the error in the flux and s as a function of b and the degree of the spherical harmonic
     input:
-        jax_ld = [f"results/jax_nonuniform_limbdark_f_{r}.npz" for r in radii],
-        jax = [f"results/jax_limbdark_f_{r}.npz" for r in radii],
-        starry = [f"static/starry_limbdark_f_{r}.npz" for r in radii],
-        exo = [f"results/exoplanet_limbdark_f_{r}.npz" for r in radii],
-        num = [f"results/num_limbdark_f_{r}.npz" for r in radii],
+        jax_ld = [f"data/jax_nonuniform_limbdark_f_{r}.npz" for r in radii],
+        jax = [f"data/jax_limbdark_f_{r}.npz" for r in radii],
+        starry = [f"data/starry_limbdark_f_{r}.npz" for r in radii],
+        exo = [f"data/exoplanet_limbdark_f_{r}.npz" for r in radii],
+        num = [f"data/num_limbdark_f_{r}.npz" for r in radii],
     params:
         degree = l_max,
         order = limb_dark_q
@@ -247,22 +240,22 @@ orders = [20, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
 
 rule concatenate_errors_GL:
     input:
-        num = [f"results/num_fs_{r}.npz" for r in GL_radii],
-        **{f"jax_{order}": [f"results/jax_fs_r={r}_order={order}.npz" for r in GL_radii] for order in orders},
+        num = [f"data/jax_fs_r={r}_order=800.npz" for r in GL_radii],
+        **{f"jax_{order}": [f"data/jax_fs_r={r}_order={order}.npz" for r in GL_radii] for order in orders},
     params:
         rs = GL_radii,
         orders = orders
-    output: "results/errors_GL.npz"
+    output: "data/errors_GL.npz"
     script: "scripts/concatenate_errors_GL.py"
 
 rule plot_error_GL:
-    input: "results/errors_GL.npz"
+    input: "data/errors_GL.npz"
     output: "figures/error_order.pdf"
     script: "scripts/plot_error_GL.py"
 
 
 rule plot_error_degree_GL:
-    input: "results/errors_GL.npz"
+    input: "data/errors_GL.npz"
     output: "figures/error_order_degree.pdf"
     params:
         l_max = l_max

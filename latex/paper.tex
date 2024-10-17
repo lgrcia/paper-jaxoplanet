@@ -120,8 +120,8 @@ with $\bvec{y}_u$ defined in \autoref{eq:limb_darkening_map}. Hence, we normaliz
 As shown in \autoref{starry}, computing the flux of the surface at a given time $t$ involves a rotation of the spherical harmonics basis, from the rest-frame of the star (\autoref{fig:rotation_basis}, left) to its sky-projected orientation (\autoref{fig:rotation_basis}, right), with a final rotation relative to the position of the occulting body (see Figure 2. from \citealt{starry}).
 \begin{figure}[H]
     \begin{center}
-        \includegraphics[width=0.6\textwidth]{../workflows/geometry/figures/rotation_basis.pdf}
-        \caption{Rotation of a primary body's surface to place it in the sky-projected frame of the observer. \codelink{workflows/geometry/scripts/rotations.ipynb}}
+        \includegraphics[width=0.6\textwidth]{../workflows/figures/rotation_basis.pdf}
+        \caption{Rotation of a primary body's surface to place it in the sky-projected frame of the observer. \codelink{workflows/scripts/rotation_figures.py}}
         \label{fig:rotation_basis}
     \end{center}
 \end{figure}
@@ -129,14 +129,14 @@ As shown in \autoref{starry}, computing the flux of the surface at a given time 
 The rotation of spherical harmonics involves the computation of Wigner-D-matrices, commonly obtained through robust recursion relations in both degree $l$ and order $m$, but leading to costly computations. Hence, knowing how to decompose the full spherical harmonics rotation using pre-computed rotations is essential to achieve optimal performance in this framework. \autoref{fig:rotation_starry} shows the 6 elementary rotations currently used in \textsf{starry}.
 \begin{figure}[H]
     \begin{center}
-        \includegraphics[width=\textwidth]{../workflows/geometry/figures/rotation_starry.pdf}
-        \caption{Decomposition of the full rotation of the surface into elementary rotations. Each schematic shows a sphere rotated from a previous orientation around an axis displayed as a black vector and an angle shown on top. \codelink{workflows/geometry/scripts/rotations.ipynb}}
+        \includegraphics[width=\textwidth]{../workflows/figures/rotation_starry.pdf}
+        \caption{Decomposition of the full rotation of the surface into elementary rotations. Each schematic shows a sphere rotated from a previous orientation around an axis displayed as a black vector and an angle shown on top. \codelink{workflows/scripts/rotation_figures.py}}
         \label{fig:rotation_starry}
     \end{center}
 \end{figure}
 In this figure, the first 3 rotations have the effect to rotate the star around its rotation axis, and rotations 3 to 5 place the star on a sky-projected frame. Finally, rotation 6 aligns the spherical harmonics map to the occulting body on the $y$ axis in order to apply Green's theorem in the appropriate basis (Figure 2 from \citealt{starry}).\\\\
 The first thing to notice is that rotations 1 to 3 could be simply reduced to a rotation of angle $\theta$ about the y-axis, turning steps 1 to 3 into one. However, rotations around the pole, i.e.\,with a rotation axis along $z$, have simpler expressions that can be implemented separately. In addition, pre-computing these matrices at lower cost is particularly important for steps 2 and 6, involving a potentially large set of angles $\{\theta\}$ and $\{\theta_z\}$, defined over times $\{t\}$, in order to compute the full light curve. This explains the current decomposition of the complete rotation in six separate steps.\\\\
-In \textsf{jaxoplanet}, we compute the Wigner-D-matrices by employing the Risbo recursion relations \citep{Risbo1996} implemented in \textsf{JAX} as part of the \textsf{s2fft} Python package \citep{price:s2fft}. In addition, we merge rotations 3, 4 and 5 (see \autoref{fig:rotation_jaxoplanet}) into a single compound rotation of axis
+In \textsf{jaxoplanet}, we compute the Wigner-D-matrices by employing the Risbo recursion relations \citep{Risbo1996} implemented in \textsf{JAX} as part of the \textsf{s2fft} Python package \citep{price:s2fft}. In addition, we merge rotations 3, 4 and 5 (see \autoref{fig:rotation_jaxoplanet}) into a single compound rotation of axis 
 \begin{equation}
     \label{eq:v}
     \bvec{v} = \frac{1}{\sqrt{1 - \cos^2{\left(\frac{inc}{2} \right)} \cos^2{\left(\frac{obl}{2}\right)}}} \begin{pmatrix}
@@ -153,8 +153,8 @@ and angle
 This way, the complete rotation reduces to the four separate steps shown in \autoref{fig:rotation_jaxoplanet}.
 \begin{figure}[H]
     \begin{center}
-        \includegraphics[width=\textwidth]{../workflows/geometry/figures/rotation_jaxoplanet_1.pdf}
-        \caption{Consecutive rotations of the spherical harmonics basis in the \textsf{jaxoplanet} implementation. Each schematic shows a sphere rotated from a previous orientation around an axis displayed as a black vector and an angle shown on top. \codelink{workflows/geometry/scripts/rotations.ipynb}}
+        \includegraphics[width=\textwidth]{../workflows/figures/rotation_jaxoplanet_1.pdf}
+        \caption{Consecutive rotations of the spherical harmonics basis in the \textsf{jaxoplanet} implementation. Each schematic shows a sphere rotated from a previous orientation around an axis displayed as a black vector and an angle shown on top. \codelink{workflows/scripts/rotation_figures.py}}
         \label{fig:rotation_jaxoplanet}
     \end{center}
 \end{figure}
@@ -170,8 +170,8 @@ where $\mathcal{Q}(\bvec{G}_n)$ and $\mathcal{P}(\bvec{G}_n)$ are line integrals
 %
 \begin{figure}[H]
     \begin{center}
-        \includegraphics[width=\textwidth]{../workflows/geometry/figures/occultation_geometry.pdf}
-        \caption{Geometric configuration and angles definitions for the two-body occultation. On the left figure, the larger light grey disk corresponds to the primary body being occulted by the darker secondary body. On the right figure, the area $S$ over which the intensity is integrated is shown in light blue. By choosing an appropriate transform, the integration over $S$ can be reduced to a line integral over the contour of the occulting body, which can be decomposed into the contour of the occulting body within the area of the primary body (in cyan) and the contour of the primary body everywhere else (in blue). \codelink{workflows/geometry/scripts/occultation_geometry.ipynb}}
+        \includegraphics[width=\textwidth]{../workflows/figures/occultation_geometry.pdf}
+        \caption{Geometric configuration and angles definitions for the two-body occultation. On the left figure, the larger light grey disk corresponds to the primary body being occulted by the darker secondary body. On the right figure, the area $S$ over which the intensity is integrated is shown in light blue. By choosing an appropriate transform, the integration over $S$ can be reduced to a line integral over the contour of the occulting body, which can be decomposed into the contour of the occulting body within the area of the primary body (in cyan) and the contour of the primary body everywhere else (in blue). \codelink{workflows/scripts/occultation_geometry.py}}
         \label{fig:geometry}
     \end{center}
 \end{figure}
@@ -323,24 +323,24 @@ In this section, we evaluate the accuracy and speed of the \textsf{jaxoplanet} i
 We evaluate the precision of the \textsf{starry} and \textsf{jaxoplanet} terms against quantities computed at arbitrary precision, using a ground truth version of the code implemented with the \textsf{mpmath} Python library\footnote{\href{https://mpmath.org/}{https://mpmath.org/}}. The precision of the overall flux $f$ can only be understood by considering the precision of the terms involved in \autoref{eq:starry}: the solution vector $\bvec{s}^\mathsf{T}$ ($\bvec{r}^\mathsf{T}$ if no occultation), the change of basis matrices $\bvec{A_1}$ and $\bvec{A_2}$, and the Wigner-D rotation matrix $\bvec{R}$. Although we show in \autoref{fig:precision_SAR} that the precision of the \textsf{starry} and \textsf{jaxoplanet} implentations slightly differ for many of these terms, we focus this section on the solution vector $\bvec{s}^\mathsf{T}$ and the overall flux $f$.\\\\
 \begin{figure}[H]
     \begin{center}
-        \includegraphics[width=\textwidth]{../workflows/precision/figures/error_jax.pdf}
-        \caption{Error of the solution vector $\bvec{s}^\mathsf{T}$ and the overall flux $f$ for all terms of the spherical harmonics basis up to degree $l_{max}=20$. Errors are computed against arbitrary-precision computations of the solution vector and the flux for a small ($r=0.01$) and a large ($r=100$) occultor transiting the star accross numerically-sensitive values of impact parameters $b$. For each basis component $i$, all coefficients are set to zero except $y_i=1$ and errors are scaled to the highest values of $\bvec{s}$ (respectively $f$) over $b$. Then, the plotted errors for each degree $l$ are the maximum of the scaled errors over all $m\in [-l, l]$ components over $b$. The disks at the top of the figure show the transit configurations of the occultor (light dark) and the primary surface (light gray) for different values of $b$. \codelink{workflows/precision/scripts/plot_error.py}}
+        \includegraphics[width=\textwidth]{../workflows/figures/error_jax.pdf}
+        \caption{Error of the solution vector $\bvec{s}^\mathsf{T}$ and the overall flux $f$ for all terms of the spherical harmonics basis up to degree $l_{max}=20$. Errors are computed against arbitrary-precision computations of the solution vector and the flux for a small ($r=0.01$) and a large ($r=100$) occultor transiting the star accross numerically-sensitive values of impact parameters $b$. For each basis component $i$, all coefficients are set to zero except $y_i=1$ and errors are scaled to the highest values of $\bvec{s}$ (respectively $f$) over $b$. Then, the plotted errors for each degree $l$ are the maximum of the scaled errors over all $m\in [-l, l]$ components over $b$. The disks at the top of the figure show the transit configurations of the occultor (light dark) and the primary surface (light gray) for different values of $b$. \codelink{workflows/scripts/plot_error.py}}
         \label{fig:precision_s}
     \end{center}
 \end{figure}
 Assuming that we perform the numerical integration described in \autoref{solution_vector} at a relatively high order $q=500$, \autoref{fig:precision_s} shows that our reimplentation of \textsf{starry} reaches relative errors lower than 1 part per billion for $\bvec{s}^\mathsf{T}$ and the overall flux $f$, for almost all degrees up to $l_{max}=20$ and considering both a small ($r=0.01$) and a large ($r=100$) occultor transiting the star accross numerically-sensitive values of impact parameters $b$. For reference, \autoref{fig:precision_s_starry} shows comparable errors on the same quantities computed with the C++ implentation of \textsf{starry}. \\\\
 In addition, \autoref{fig:precision_degree} shows the evolution of the error on $f$ for increasing degrees of the spherical harmonics for \textsf{starry} and \textsf{jaxoplanet}.
-\begin{figure}[H]
+\begin{figure}[H]  
     \begin{center}
-        \includegraphics[width=\textwidth]{../workflows/precision/figures/error_degree.pdf}
-        \caption{Maximum errors in the overall flux $f$ for all degrees of the spherical harmonics components. Errors shown in this figure correspond to the maximum values of the scaled errors shown in \autoref{fig:precision_s} over the range of values $b$, but computed with $q=250$. \codelink{workflows/precision/scripts/plot_error_vs_degree.py}}
+        \includegraphics[width=\textwidth]{../workflows/figures/error_degree.pdf}
+        \caption{Maximum errors in the overall flux $f$ for all degrees of the spherical harmonics components. Errors shown in this figure correspond to the maximum values of the scaled errors shown in \autoref{fig:precision_s} over the range of values $b$, but computed with $q=250$. \codelink{workflows/scripts/plot_error_vs_degree.py}}
         \label{fig:precision_degree}
     \end{center}
 \end{figure}
 \begin{figure}[H]
     \begin{center}
-        \includegraphics[width=\textwidth]{../workflows/precision/figures/limbdark_error.PDF}
-        \caption{Maximum errors in the overall flux $f$ of a star occulted by an opaque body for increasing orders of its polynomial limb darkening law. Errors shown in this figure correspond to the maximum values of the scaled errors shown in \autoref{fig:precision_s} over the range of values $b$, but computed with $q=100$. For each order $n$, all limb darkening coefficients are set to zero except the $n$-th coefficient $u_n=1$. The purple points show the \textsf{exoplanet} errors on the flux $f$, limited to the linear and quadratic limb darkening laws. In order to benchmark our code (denoted \textsf{jaxoplanet (PLD)} and shown in cyan) for higher order laws, we show the error of the flux computed with the \textsf{starry} (black) and \textsf{jaxoplanet} (blue) codes, using the formalism of \cite{starry} instead \cite{Agol2020}. \codelink{workflows/precision/scripts/plot_error_limbdark.py}}
+        \includegraphics[width=\textwidth]{../workflows/figures/limbdark_error.PDF}
+        \caption{Maximum errors in the overall flux $f$ of a star occulted by an opaque body for increasing orders of its polynomial limb darkening law. Errors shown in this figure correspond to the maximum values of the scaled errors shown in \autoref{fig:precision_s} over the range of values $b$, but computed with $q=100$. For each order $n$, all limb darkening coefficients are set to zero except the $n$-th coefficient $u_n=1$. The purple points show the \textsf{exoplanet} errors on the flux $f$, limited to the linear and quadratic limb darkening laws. In order to benchmark our code (denoted \textsf{jaxoplanet (PLD)} and shown in cyan) for higher order laws, we show the error of the flux computed with the \textsf{starry} (black) and \textsf{jaxoplanet} (blue) codes, using the formalism of \cite{starry} instead \cite{Agol2020}. \codelink{workflows/scripts/plot_error_limbdark.py}}
         \label{fig:precision_limbdark}
     \end{center}
 \end{figure}
@@ -348,15 +348,15 @@ In \autoref{fig:precision_limbdark}, we compare the precision of our limb darken
 As described in \autoref{solution_vector}, we compute occultation light curves using the Gauss Legendre quadrature to approximate the $\mathcal{P}$ integral involved in the expression of the solution vector $\bvec{s}^\mathsf{T}$. Hence, the precision of the computed flux $f$ depends on the order of the Legendre polynomial which defines the number of points used to approximate $\mathcal{P}$ (see \autoref{fig:relative_error_1}, or  \autoref{fig:precision_order_gausslegendre_degree} in the Appendix to see the effect for different spherical harmonics degrees $l$). Hence, users must carefully set the order parameter $q$ to balance precision and computational speed (see \autoref{speed}).
 \begin{figure}[H]
     \begin{center}
-        \includegraphics[width=\textwidth]{../workflows/precision/figures/br_error.png}
-        \caption{relative numerical error in the flux $f$ of a linearly limb-darkened star (degree $l$=1) transited by an opaque companion over the $(r, b)$ parameter space. The error is evaluated for different orders $q$ of the Gauss-Legendre quadrature and computed against values of $f$ obtained with $q=800$. Note that \autoref{fig:precision_s} was produced using $q=500$ (right plot) for which $\bvec{s}$ reaches machine precision. \codelink{workflows/precision/scripts/plot_br_error.py}}
+        \includegraphics[width=\textwidth]{../workflows/figures/br_error.png}
+        \caption{relative numerical error in the flux $f$ of a linearly limb-darkened star (degree $l$=1) transited by an opaque companion over the $(r, b)$ parameter space. The error is evaluated for different orders $q$ of the Gauss-Legendre quadrature and computed against values of $f$ obtained with $q=800$. Note that \autoref{fig:precision_s} was produced using $q=500$ (right plot) for which $\bvec{s}$ reaches machine precision. \codelink{workflows/scripts/plot_br_error.py}}
         \label{fig:relative_error_1}
     \end{center}
 \end{figure}
 % In \autoref{fig:precision_order_gausslegendre}, we show how the error in the solution vector evolves with the order $n$ of the Gauss-Legendre quadrature, and its impact on the error in the overall flux.
 % \begin{figure}[H]
 %     \begin{center}
-%         \includegraphics[width=\textwidth]{../workflows/precision/figures/error_order.pdf}
+%         \includegraphics[width=\textwidth]{../workflows/figures/error_order.pdf}
 %         \caption{Maximum errors in the solution vector and overall flux $f$ for different occultor radii and orders $n$ of the Gauss-Legendre quadrature used to compute the P integral (see \autoref{solution_vector}). Errors shown in this figure correspond to the maximum values of the scaled errors shown in \autoref{fig:precision_s}, maxima taken over the range of values $b$. As in \autoref{fig:precision_s} the maximum degree of the spherical harmonics basis is set to $l=20$.}
 %         \label{fig:precision_order_gausslegendre}
 %     \end{center}
@@ -370,8 +370,8 @@ One of the advantage of the \textsf{JAX} library is its ability to perform hardw
 While performing numerical integration may be seen as a downside in our implementation, adapting the value of $q$ to the precision required for specific applications allows users to optimize the computation time of the model to their advantage. To demonstrate this point, we first consider the transmission spectroscopy of TRAPPIST-1 b performed with the JWST/NIRISS instrument (GO-2589, \citealt{Lim2023}). These observations reached an estimated precision of 89 ppm for a planet with a relative radius of the order $r\sim0.1$. In this context, numerical integration with an order as low as $q=10$ guarantees that our model reaches a precision of $10^{-16}$, an execution time on par with \textsf{exoplanet} on CPU and up to an order of magnitude faster on GPU for large datasets (see left plot of \autoref{fig:real_benchmark}). The second example we consider is the secondary ecclipse mapping of HD 189733 b ($r\sim0.3$) using Spitzer's 8 micron channel \citep{majeau2012} obtained at a precision of about 1 ppt. For a spherical harmonics map of degree $l_{max}=3$, $q=10$ guarantees a model with a precision of $10^{-10}$, an execution time one order of magnitude faster than \textsf{starry} on CPU and up to two orders of magnitude faster on GPU for large datasets (see right plot of \autoref{fig:real_benchmark}).\\\\
 \begin{figure}[H]
     \begin{center}
-        \includegraphics[width=\textwidth]{../workflows/speed/figures/speed_vs_N_realistic.pdf}
-        \caption{Evaluation time versus number of points for different light curve models used in realistic applications. On the left, we evaluate the time required by \textsf{jaxoplanet} and \textsf{exoplanet} to compute the quadratically limb darkened transit light curve of TRAPPIST-1 b observed with the JWST/NIRISS instrument (for which $q=10$ yields machine precision). On the right we evaluate the time required by \textsf{jaxoplanet} and \textsf{starry} to compute the secondary eclipse light curve of HD 189733 b whose surface is modeled using spherical harmonics of degree $l_{max}=3$ (with $q=10$ leading to a precision of $10^{-10}$). On CPU, our benchmark is done on the single core of an Apple M2 max chip, while on GPU we use the single core of an NVIDIA Tesla V100 processor. \codelink{workflows/speed/scripts/plot_speed_vs_N_realistic.py}}
+        \includegraphics[width=\textwidth]{../workflows/figures/speed_vs_N_realistic.pdf}
+        \caption{Evaluation time versus number of points for different light curve models used in realistic applications. On the left, we evaluate the time required by \textsf{jaxoplanet} and \textsf{exoplanet} to compute the quadratically limb darkened transit light curve of TRAPPIST-1 b observed with the JWST/NIRISS instrument (for which $q=10$ yields machine precision). On the right we evaluate the time required by \textsf{jaxoplanet} and \textsf{starry} to compute the secondary eclipse light curve of HD 189733 b whose surface is modeled using spherical harmonics of degree $l_{max}=3$ (with $q=10$ leading to a precision of $10^{-10}$). On CPU, our benchmark is done on the single core of an Apple M2 max chip, while on GPU we use the single core of an NVIDIA Tesla V100 processor. \codelink{workflows/scripts/plot_speed_vs_N_realistic.py}}
         \label{fig:real_benchmark}
     \end{center}
 \end{figure}
@@ -393,22 +393,22 @@ The \textsf{jaxoplanet} code is open source under the MIT License and is hosted 
 This section contains additional figures showing the precision of the \textsf{jaxoplanet} implementation and its comparison to the C++ implementation of \textsf{starry}.
 \begin{figure}[H]
     \begin{center}
-        \includegraphics[width=\textwidth]{../workflows/precision/figures/error_SAR.pdf}
-        \caption{Typical errors in the matrices involved in the computation of the flux from \autoref{eq:starry}. \codelink{workflows/precision/scripts/plot_error_SAR.py}}
+        \includegraphics[width=\textwidth]{../workflows/figures/error_SAR.pdf}
+        \caption{Typical errors in the matrices involved in the computation of the flux from \autoref{eq:starry}. \codelink{workflows/scripts/plot_error_SAR.py}}
         \label{fig:precision_SAR}
     \end{center}
 \end{figure}
 \begin{figure}[H]
     \begin{center}
-        \includegraphics[width=\textwidth]{../workflows/precision/figures/error_starry.pdf}
-        \caption{Same as \autoref{fig:precision_s} but with $\bvec{s}^\mathsf{T}$ and $f$ computed with the C++ implementation of \textsf{starry}. \codelink{workflows/precision/scripts/plot_error.py}}
+        \includegraphics[width=\textwidth]{../workflows/figures/error_starry.pdf}
+        \caption{Same as \autoref{fig:precision_s} but with $\bvec{s}^\mathsf{T}$ and $f$ computed with the C++ implementation of \textsf{starry}. \codelink{workflows/scripts/plot_error.py}}
         \label{fig:precision_s_starry}
     \end{center}
 \end{figure}
 \begin{figure}[H]
     \begin{center}
-        \includegraphics[width=\textwidth]{../workflows/precision/figures/error_order_degree.pdf}
-        \caption{Maximum errors in the overall flux $f$ for all degrees of the spherical harmonics components for different occultor radii and orders $q$ of the Gauss-Legendre quadrature used to compute the $\mathcal{P}$ integral (see \autoref{solution_vector}). Errors shown in this figure correspond to the maximum values of the scaled errors shown in \autoref{fig:precision_s}, maxima taken over the range of values $b$. \codelink{workflows/precision/scripts/plot_error_several_r_GL_degree_SH.py}}
+        \includegraphics[width=\textwidth]{../workflows/figures/error_order_degree.pdf}
+        \caption{Maximum errors in the overall flux $f$ for all degrees of the spherical harmonics components for different occultor radii and orders $q$ of the Gauss-Legendre quadrature used to compute the $\mathcal{P}$ integral (see \autoref{solution_vector}). Errors shown in this figure correspond to the maximum values of the scaled errors shown in \autoref{fig:precision_s}, maxima taken over the range of values $b$. \codelink{workflows/scripts/plot_error_several_r_GL_degree_SH.py}}
         \label{fig:precision_order_gausslegendre_degree}
     \end{center}
 \end{figure}
@@ -417,16 +417,16 @@ This section contains additional figures showing the precision of the \textsf{ja
 Unlike \autoref{speed}, this section focuses on speed benchmarks at state-of-the-art precision. In \autoref{fig:speed_order_gausslegendre}, we show the evolution of the time required to compute the occultation light curve of a limb darkened star and that of a non-uniform star described by spherical harmonics of degree $l_{max}=20$, depending on the order $q$ of the numerical integration. On CPU, our benchmark is done on the single core of an Apple M2 max chip, while on GPU we use the single core of an NVIDIA Tesla V100 processor.\\\\
 \begin{figure}[H]
     \begin{center} 
-        \includegraphics[width=\textwidth]{../workflows/speed/figures/speed_vs_order.pdf}
-        \caption{Computation time of the occultation light curve of a limb-darkened star (left) and a non-uniform star described by spherical harmonics up to order $l_{max}=20$ (right) depending on the order $q$ of the Gauss-Legendre quadrature used to compute the $\mathcal{P}$ integral numerically (see \autoref{solution_vector}). The processing time reported for \textsf{exoplanet} and \textsf{starry} is independent of $q$ as these two codes provide closed-form solutions for the integral $\mathcal{P}$. Light curves are computed for $10\,000$ points in transit and an occultor radius $r=0.1$. \codelink{workflows/speed/scripts/plot_speed_vs_order.py}}
+        \includegraphics[width=\textwidth]{../workflows/figures/speed_vs_order.pdf}
+        \caption{Computation time of the occultation light curve of a limb-darkened star (left) and a non-uniform star described by spherical harmonics up to order $l_{max}=20$ (right) depending on the order $q$ of the Gauss-Legendre quadrature used to compute the $\mathcal{P}$ integral numerically (see \autoref{solution_vector}). The processing time reported for \textsf{exoplanet} and \textsf{starry} is independent of $q$ as these two codes provide closed-form solutions for the integral $\mathcal{P}$. Light curves are computed for $10\,000$ points in transit and an occultor radius $r=0.1$. \codelink{workflows/scripts/plot_speed_vs_order.py}}
         \label{fig:speed_order_gausslegendre}
     \end{center}
 \end{figure}
 Finally, \autoref{fig:speed_N} shows the evaluation time of \textsf{jaxoplanet} as a function of the number of points in the light curve compared to \textsf{exoplanet}, for a quadratically limb darkened star, and \textsf{starry}, for a surface map of degree $l_{max} = 20$. 
 \begin{figure}[H]
     \begin{center}
-        \includegraphics[width=\textwidth]{../workflows/speed/figures/speed_vs_N.pdf}
-        \caption{Computation time of the occultation light curve of a limb-darkened star (left) and a non-uniform star described by spherical harmonics up to order $l_{max}=20$ (right) depending on the number of points in the light curve. Light curves are computed at $q=200$ and an occultor radius $r=0.1$. \codelink{workflows/speed/scripts/plot_speed_vs_N.py}}
+        \includegraphics[width=\textwidth]{../workflows/figures/speed_vs_N.pdf}
+        \caption{Computation time of the occultation light curve of a limb-darkened star (left) and a non-uniform star described by spherical harmonics up to order $l_{max}=20$ (right) depending on the number of points in the light curve. Light curves are computed at $q=200$ and an occultor radius $r=0.1$. \codelink{workflows/scripts/plot_speed_vs_N.py}}
         \label{fig:speed_N}
     \end{center}
 \end{figure}
