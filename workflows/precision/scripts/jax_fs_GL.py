@@ -3,11 +3,11 @@ import jax
 
 jax.config.update("jax_enable_x64", True)
 
-from jaxoplanet.starry.solution import solution_vector
+from jaxoplanet.starry.core.solution import solution_vector
 from jaxoplanet.starry.light_curves import *
 import numpy as np
 import jax.numpy as jnp
-from jaxoplanet.starry.solution import rT
+from jaxoplanet.starry.core.solution import rT
 from jaxoplanet.starry.mpcore.basis import A1
 from jaxoplanet.starry.core.basis import A2_inv
 from jaxoplanet.starry.mpcore.utils import to_numpy

@@ -1,6 +1,6 @@
 import numpy as np
 from jaxoplanet.starry.multiprecision import mp
-from jaxoplanet.starry.multiprecision.flux import flux_function
+from jaxoplanet.starry.multiprecision.flux import flux
 
 r = float(snakemake.wildcards.r)
 l_max = snakemake.params.l_max
@@ -25,7 +25,7 @@ def is_occ(b, r):
 if not np.all(is_occ(bs, r)):
     raise ValueError("Impact parameter out of bounds")
 
-func = flux_function(l_max, mp.pi / 2, 0.0, cache=num_matrices)
+func = flux(ydeg=l_max, cache=num_matrices)
 
 from tqdm import tqdm
 
@@ -33,7 +33,7 @@ results = []
 sT = []
 
 for b in tqdm(bs):
-    results.append(func(y, b, r, 0.0))
+    results.append(func(b, r, y=y))
     sT.append(num_matrices[l_max]["sT"][(b, r)])
 
 import pickle
