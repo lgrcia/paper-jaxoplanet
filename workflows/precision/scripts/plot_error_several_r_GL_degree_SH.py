@@ -2,7 +2,7 @@
 Gauss-Legendre quadrature, and spherical harmonic degrees.
 """
 
-from jaxoplanet.experimental.starry import Ylm
+from jaxoplanet.starry import Ylm
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -33,7 +33,7 @@ for axi, ri in enumerate([0, 2, 4]):
         ax.set_yscale("log")
 
 ax.set_ylim(1e-16, 1)
-axes[1].set_xlabel("order $n$ of the Gauss-Legendre quadrature")
+axes[1].set_xlabel("order $q$ of the Gauss-Legendre quadrature")
 axes[0].set_ylabel("max relative error on the flux")
 
 l_arr = [0, 5, 10, 20]

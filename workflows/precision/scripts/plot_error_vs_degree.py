@@ -1,8 +1,13 @@
+import jax
+
+jax.config.update("jax_enable_x64", True)
 import matplotlib.pyplot as plt
 import numpy as np
-from jaxoplanet.experimental.starry.mpcore import mp, utils
+from jaxoplanet.starry.multiprecision import mp, utils
 
 l_max = snakemake.params.l_max
+
+q_order = int(eval(snakemake.input.jax[1].split("order=")[1].split(".")[0]))
 
 data = {
     "small": {
@@ -36,7 +41,7 @@ def errors(M_mp, M_np):
     return frac
 
 
-from jaxoplanet.experimental.starry.ylm import Ylm
+from jaxoplanet.starry.ylm import Ylm
 
 indices = {
     l: np.array([Ylm.index(l, m) for m in range(-l, l + 1)]) for l in range(l_max + 1)
@@ -77,8 +82,15 @@ ax1.set_xlabel("degree of spherical harmonics")
 ax1.set_ylabel("relative error")
 ax1.set_title("$r=0.01$")
 ax1.set_yscale("log")
-ax1.set_ylim(1e-17, 1e-5)
+ax1.set_ylim(1e-17, 1e-4)
 ax1.set_xticks(x)
+ax1.annotate(
+    f"q={q_order}",
+    xy=(1 - 0.02, 0.05),
+    xycoords="axes fraction",
+    fontsize=10,
+    ha="right",
+)
 
 ax2 = plt.subplot(122)
 ax2.plot(
@@ -91,7 +103,7 @@ ax2.legend()
 ax2.set_xlabel("degree of spherical harmonics")
 ax2.set_title("$r=100$")
 ax2.set_yscale("log")
-ax2.set_ylim(1e-17, 1e-5)
+ax2.set_ylim(1e-17, 1e-4)
 ax2.set_yticklabels([])
 ax2.set_xticks(x)
 

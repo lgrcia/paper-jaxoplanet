@@ -1,33 +1,36 @@
 l_max = snakemake.params.l_max
 
-from jaxoplanet.experimental.starry.mpcore import mp
-from jaxoplanet.experimental.starry.mpcore.basis import A1, A2_inv
-from jaxoplanet.experimental.starry.mpcore.rotation import R
-
+from jaxoplanet.starry.multiprecision import mp
+from jaxoplanet.starry.multiprecision.basis import A1, A2
+from jaxoplanet.starry.multiprecision.rotation import get_R
+from collections import defaultdict
 
 inc = mp.pi / 2
 obl = 0.0
 
-_A1 = A1(l_max)
-_A2 = A2_inv(l_max) ** -1
+matrices = defaultdict(
+    lambda: {
+        "R_obl": {},
+        "R_inc": {},
+        "sT": {},
+    }
+)
 
-R_px = R(l_max, (1.0, 0.0, 0.0), -0.5 * mp.pi)
-R_mx = R(l_max, (1.0, 0.0, 0.0), 0.5 * mp.pi)
-R_obl = R(l_max, (0.0, 0.0, 1.0), -obl)
-R_inc = R(l_max, (-mp.cos(obl), -mp.sin(obl), 0.0), (0.5 * mp.pi - inc))
 
-import numpy as np
+_ = A1(l_max, cache=matrices)
+_ = A2(l_max, cache=matrices)
+_ = get_R("R_px", l_max, cache=matrices)
+_ = get_R("R_mx", l_max, cache=matrices)
+_ = get_R("R_inc", l_max, inc=inc, obl=obl, cache=matrices)
+_ = get_R("R_obl", l_max, inc=inc, obl=obl, cache=matrices)
+
+print("Computing A1inv...")
+matrices[l_max]["A1inv"] = matrices[l_max]["A1"] ** -1
+
 import pickle
 
 with open(snakemake.output[0], "wb") as f:
     pickle.dump(
-        {
-            "A1": _A1,
-            "A2": _A2,
-            "R_px": R_px,
-            "R_mx": R_mx,
-            "R_obl": R_obl,
-            "R_inc": R_inc,
-        },
+        dict(matrices),
         f,
     )

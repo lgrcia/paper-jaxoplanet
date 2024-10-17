@@ -19,7 +19,7 @@ rule all:
         "figures/error_degree.pdf",
         "figures/limbdark_error.pdf",
         "figures/error_SAR.pdf",
-        "figures/br_error.png",
+        # "figures/br_error.png",
         "figures/error_order.pdf",
         "figures/error_order_degree.pdf"
 
@@ -63,7 +63,6 @@ rule concatenate_fs:
     input: 
         bs = "data/b_{r}.npz", 
         i = [f"data/num_fs_{{r}}_{i}.npz" for i in range(n_max)],
-        s = "data/num_sT_{r}.npz"
     output: "results/num_fs_{r}.npz"
     script: "scripts/concatenate_fs.py"
 
@@ -116,7 +115,7 @@ rule plot_error_starry:
 rule plot_error_degree:
     # Plot the error in the flux and s as a function of b and the degree of the spherical harmonic
     input:
-        jax = [f"results/jax_fs_r={r}_order=500.npz" for r in radii],
+        jax = [f"results/jax_fs_r={r}_order=250.npz" for r in radii],
         num = [f"results/num_fs_{r}.npz" for r in radii],
         starry = [f"results/starry_fs_{r}.npz" for r in radii]
     params:
@@ -134,8 +133,10 @@ rule compute_SAR:
 
 rule plot_error_SAR:
     # Plot the error in the s, A and R matrices of jax and starry compared to mpmath
-    input: "data/num_fs_matrices.npz", "results/SAR.npz"
+    input: "data/num_fs_matrices.npz", "static/SAR.npz"
     output: "figures/error_SAR.pdf"
+    params:
+        l_max = l_max
     script: "scripts/plot_error_SAR.py"
 
 rule make_br_dense:
@@ -160,7 +161,7 @@ rule br_plot:
     # Plot error on the flux in (b, r) space for different orders
     input: 
         jaxoplanet = [f"data/jax_f_order_{order}.npz" for order in error_orders],
-        starry = "data/starry_f_order.npz",
+        reference = "data/jax_f_order_800.npz",
         br = f"data/br_dense_{N}.npz"
     output: "figures/br_error.png"
     params:
@@ -169,6 +170,8 @@ rule br_plot:
 
 # ERROR FOR DIFFERENT LIMB-DARKENING POLYNOMIAL ORDERS
 # ----------------------------------------------------
+
+limb_dark_q = 100
 
 rule num_fs_limbdark:
     # Compute the flux for a given r and range of b for a limb-darkened star
@@ -189,8 +192,18 @@ rule jax_fs_limbdark:
     output: "results/jax_limbdark_f_{r}.npz"
     params:
         degree = l_max,
-        order = 500
+        order = limb_dark_q
     script: "scripts/jax_f_limbdark.py"
+
+rule jax_fs_nonuniform_limbdark:
+    # Compute the flux for a given r and range of b for a limb-darkened star
+    # with polynomial law
+    input: "data/b_{r}.npz"
+    output: "results/jax_nonuniform_limbdark_f_{r}.npz"
+    params:
+        degree = l_max,
+        order = limb_dark_q
+    script: "scripts/jax_f_nonuniform_limbdark.py"
 
 rule exoplanet_fs_limbdark:
     # Compute the flux for a given r and range of b for a limb-darkened star
@@ -214,12 +227,14 @@ rule starry_fs_limbdark:
 rule plot_error_limbdark:
     # Plot the error in the flux and s as a function of b and the degree of the spherical harmonic
     input:
+        jax_ld = [f"results/jax_nonuniform_limbdark_f_{r}.npz" for r in radii],
         jax = [f"results/jax_limbdark_f_{r}.npz" for r in radii],
-        starry = [f"results/starry_limbdark_f_{r}.npz" for r in radii],
+        starry = [f"static/starry_limbdark_f_{r}.npz" for r in radii],
         exo = [f"results/exoplanet_limbdark_f_{r}.npz" for r in radii],
         num = [f"results/num_limbdark_f_{r}.npz" for r in radii],
     params:
-        degree = l_max
+        degree = l_max,
+        order = limb_dark_q
     output: "figures/limbdark_error.pdf"
     script: "scripts/plot_error_limbdark.py"
 

@@ -9,8 +9,8 @@ y = snakemake.params.y
 num_matrices = np.load(snakemake.input[1], allow_pickle=True)
 ST = np.load(snakemake.input[2], allow_pickle=True)
 
-from jaxoplanet.experimental.starry.mpcore import mp
-from jaxoplanet.experimental.starry.mpcore.rotation import (
+from jaxoplanet.starry.mpcore import mp
+from jaxoplanet.starry.mpcore.rotation import (
     dot_rotation_matrix,
     dot_rz,
 )

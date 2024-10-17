@@ -5,6 +5,16 @@ jax.config.update("jax_enable_x64", True)
 
 import starry
 import numpy as np
+from jaxoplanet.starry.multiprecision import mp
+from jaxoplanet.starry.core.basis import A1, A2_inv
+import jax.numpy as jnp
+from jaxoplanet.starry.s2fft_rotation import compute_rotation_matrices
+from jaxoplanet.starry.multiprecision.rotation import R
+
+from jaxoplanet.starry.solution import solution_vector
+from jaxoplanet.starry.multiprecision.solution import sT
+from jaxoplanet.starry.multiprecision.utils import to_numpy
+from jaxoplanet.starry.multiprecision import basis as mbasis
 
 starry.config.lazy = False
 
@@ -15,8 +25,6 @@ l_max = snakemake.params.l_max
 u = (1.0, 0.0, 0.0)
 theta = 0.1
 
-
-from jaxoplanet.experimental.starry.mpcore.rotation import R
 
 num_R = R(l_max, u, theta)
 
@@ -48,17 +56,10 @@ def R_starry(lmax, u, theta):
 
 
 sta_R = R_starry(l_max, u, theta)
-
-from jaxoplanet.experimental.starry.s2fft_rotation import compute_rotation_matrices
-
 jax_R = compute_rotation_matrices(l_max, *u, theta)
 
 # A
-from jaxoplanet.experimental.starry.basis import A1, A2_inv
-import jax.numpy as jnp
-
-
-jax_A1 = A1(l_max).todense()
+jax_A1 = to_numpy(A1(l_max).todense())
 jax_A2 = jnp.linalg.inv(A2_inv(l_max).todense())
 jax_A = jax_A2 @ jax_A1
 
@@ -66,10 +67,11 @@ ms = starry.Map(l_max)
 sta_A1 = ms.ops.A1.eval().todense()
 sta_A = ms.ops.A.eval().todense()
 
-# S
+num_A1 = mbasis.A1(l_max)
+num_A2 = mbasis.A2(l_max)
+num_A = num_A2 @ num_A1
 
-from jaxoplanet.experimental.starry.solution import solution_vector
-from jaxoplanet.experimental.starry.mpcore.solution import sT
+# S
 
 r = 1.0
 b = 1.0
@@ -95,6 +97,9 @@ results = {
     "sta_sT": sta_sT,
     "jax_sT": jax_sT,
     "num_sT": num_sT,
+    "num_A1": num_A1,
+    "num_A2": num_A2,
+    "num_A": num_A,
 }
 
 with open(snakemake.output[0], "wb") as f:

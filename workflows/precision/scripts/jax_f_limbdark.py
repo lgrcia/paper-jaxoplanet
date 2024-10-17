@@ -2,8 +2,8 @@ import jax
 
 jax.config.update("jax_enable_x64", True)
 
-from jaxoplanet.experimental.starry import Surface
-from jaxoplanet.experimental.starry.light_curves import surface_light_curve
+from jaxoplanet.starry import Surface
+from jaxoplanet.starry.light_curves import surface_light_curve
 import numpy as np
 from tqdm import tqdm
 
@@ -24,10 +24,18 @@ def u(deg):
         return u
 
 
+# function = jax.vmap(
+#     lambda deg, b: surface_light_curve(
+#         Surface(u=u(deg)), y=b, z=10.0, r=r, order=order
+#     ),
+#     (None, 0),
+# )
+
+# USING LIMB-DARK
+from jaxoplanet.core.limb_dark import light_curve
+
 function = jax.vmap(
-    lambda deg, b: surface_light_curve(
-        Surface(u=u(deg)), y=b, z=10.0, r=r, order=order
-    ),
+    lambda deg, b: light_curve(u(deg), b, r, order=order) + 1,
     (None, 0),
 )
 
