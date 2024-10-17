@@ -5,8 +5,8 @@ jax.config.update("jax_platform_name", "cpu")
 jax.config.update("jax_enable_x64", True)
 
 import numpy as np
-from jaxoplanet.experimental.starry import Surface
-from jaxoplanet.experimental.starry.light_curves import surface_light_curve
+from jaxoplanet.starry import Surface
+from jaxoplanet.starry.light_curves import surface_light_curve
 
 b, r = np.load(snakemake.input[0]).values()
 order = int(snakemake.wildcards.order)

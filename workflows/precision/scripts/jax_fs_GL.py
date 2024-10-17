@@ -3,55 +3,14 @@ import jax
 
 jax.config.update("jax_enable_x64", True)
 
-from jaxoplanet.experimental.starry.solution import solution_vector
-from jaxoplanet.experimental.starry.light_curves import *
+from jaxoplanet.starry.solution import solution_vector
+from jaxoplanet.starry.light_curves import *
 import numpy as np
 import jax.numpy as jnp
-from jaxoplanet.experimental.starry.solution import rT
-from jaxoplanet.experimental.starry.mpcore.basis import A1
-from jaxoplanet.experimental.starry.basis import A2_inv
-from jaxoplanet.experimental.starry.mpcore.utils import to_numpy
-
-
-def surface_light_curve(
-    deg,
-    y,
-    inc,
-    obl,
-    r: float = None,
-    xo: float = None,
-    yo: float = None,
-    zo: float = None,
-    theta: float = 0.0,
-    order: int = 20,
-):
-    rT_deg = rT(deg)
-
-    # occulting body
-    if True:
-        b = jnp.sqrt(jnp.square(xo) + jnp.square(yo))
-        b_rot = jnp.logical_or(jnp.greater_equal(b, 1.0 + r), jnp.less_equal(zo, 0.0))
-        b_occ = jnp.logical_not(b_rot)
-        theta_z = jnp.arctan2(xo, yo)
-        sT = solution_vector(deg, order=order)(b, r)
-
-        if deg > 0:
-            A2 = scipy.sparse.linalg.inv(A2_inv(deg))
-            A2 = jax.experimental.sparse.BCOO.from_scipy_sparse(A2)
-        else:
-            A2 = jnp.array([1])
-
-        x = jnp.where(b_occ, sT @ A2, rT_deg)
-
-    rotated_y = left_project(deg, inc, obl, theta, theta_z, y)
-
-    A1_val = to_numpy(A1(deg))
-    p_y = Pijk.from_dense(A1_val @ rotated_y, degree=deg)
-
-    b_full_occ = jnp.logical_and(r >= 1.0, b <= r - 1)
-    norm = jnp.where(b_full_occ, 0.0, 1.0)
-
-    return p_y.tosparse() @ x * norm
+from jaxoplanet.starry.solution import rT
+from jaxoplanet.starry.mpcore.basis import A1
+from jaxoplanet.starry.core.basis import A2_inv
+from jaxoplanet.starry.mpcore.utils import to_numpy
 
 
 def jax_flux(deg, order=20, inc=np.pi / 2, obl=0.0):

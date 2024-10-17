@@ -1,8 +1,8 @@
 import numpy as np
 import pickle
-from jaxoplanet.experimental.starry.mpcore.utils import mp
-from jaxoplanet.experimental.starry import basis
-from jaxoplanet.experimental.starry.mpcore import solution
+from jaxoplanet.starry.multiprecision.utils import mp
+from jaxoplanet.starry import basis
+from jaxoplanet.starry.multiprecision import solution
 from tqdm import tqdm
 
 # some params
@@ -28,12 +28,8 @@ bs = np.load(snakemake.input.b, allow_pickle=True)["bs"]
 b = np.hstack(bs)
 
 # load A1
-print("inverting A1")
 num_matrices = np.load(snakemake.input.matrices, allow_pickle=True)
-
-# TODO: transfer that into the saved matrices
-# not done cause everything will rerun...
-A1inv = num_matrices["A1"] ** -1
+A1inv = num_matrices[degree]["A1inv"]
 
 
 # the function to compute the flux

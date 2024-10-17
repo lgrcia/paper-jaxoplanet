@@ -1,6 +1,8 @@
 import numpy as np
 
 Ns = snakemake.params.Ns
+order_l20 = snakemake.params.order_l20
+order_quad = snakemake.params.order_quad
 
 jax_times_quadratic = np.array(
     [np.median(np.load(f)["time"]) for f in snakemake.input.jaxoplanet_quadratic]
@@ -43,6 +45,13 @@ plt.ylabel("time (ms)")
 plt.title("Quadratic limb-darkened map ($l=2$)")
 plt.yscale("log")
 plt.xscale("log")
+plt.annotate(
+    f"q={order_quad}",
+    xy=(1 - 0.02, 0.05),
+    xycoords="axes fraction",
+    fontsize=10,
+    ha="right",
+)
 
 plt.subplot(122)
 plt.plot(Ns, starry_time_l20 * 1e3, ".-", label="starry", c="C3")
@@ -53,6 +62,13 @@ plt.xlabel("number of points")
 plt.title("Non-uniform map ($l=20$)")
 plt.yscale("log")
 plt.xscale("log")
+plt.annotate(
+    f"q={order_l20}",
+    xy=(1 - 0.02, 0.05),
+    xycoords="axes fraction",
+    fontsize=10,
+    ha="right",
+)
 
 plt.tight_layout()
 plt.savefig(snakemake.output[0])
