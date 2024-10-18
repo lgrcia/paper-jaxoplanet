@@ -50,7 +50,7 @@ b_sub_resolution = 50
 
 ### Running the workflows
 
-The paper rely on two main workflows that needs to be run separately with snakemake. In the conda environment, run 
+The paper relies on two main workflows that needs to be run separately with snakemake. In the conda environment, run 
 
 ```bash
 cd workflows
