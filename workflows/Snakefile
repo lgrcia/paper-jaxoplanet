@@ -1,5 +1,5 @@
-l_max = 2
-b_sub_resolution = 2
+l_max = 20
+b_sub_resolution = 50
 # static_gpu = "speed_gpu_single_core"
 static_gpu = "data"
 
