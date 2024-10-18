@@ -1,0 +1,39 @@
+l_max = 20
+b_sub_resolution = 50
+# static_gpu = "speed_gpu_single_core"
+static_gpu = "data"
+
+include: "speed/Snakefile"
+include: "precision/Snakefile"
+
+rule speed_figures:
+    input:
+        "figures/speed_vs_order.pdf",
+        "figures/speed_vs_N.pdf",
+        "figures/speed_vs_N_realistic.pdf",
+
+rule precision_figures:
+    input:
+        "figures/error_jax.pdf",
+        "figures/error_starry.pdf",
+        "figures/error_degree.pdf",
+        "figures/limbdark_error.pdf",
+        "figures/error_SAR.pdf",
+        "figures/br_error.png",
+        "figures/error_order.pdf",
+        "figures/error_order_degree.pdf",
+        "figures/rotation_basis.pdf",
+        "figures/rotation_starry.pdf",
+        "figures/rotation_jaxoplanet_1.pdf",
+        "figures/occultation_geometry.pdf"
+
+rule occultation_figure:
+    output: "figures/occultation_geometry.pdf"
+    script: "scripts/occultation_geometry.py"
+
+rule rotation_figures:
+    output:
+        "figures/rotation_basis.pdf",
+        "figures/rotation_starry.pdf",
+        "figures/rotation_jaxoplanet_1.pdf"
+    script: "scripts/rotation_figures.py"

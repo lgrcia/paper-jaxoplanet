@@ -1,7 +1,7 @@
 import numpy as np
 
 Ns = snakemake.params.Ns
-order_l20 = snakemake.params.order_l20
+order_l3 = snakemake.params.order_l3
 order_quad = snakemake.params.order_quad
 
 jax_times_quadratic = np.array(
@@ -58,7 +58,7 @@ plt.title(r"HD 189733b ($l_{max}=3$, r~0.3)")
 plt.yscale("log")
 plt.xscale("log")
 plt.annotate(
-    f"q={order_l20}",
+    f"q={order_l3}",
     xy=(1 - 0.02, 0.05),
     xycoords="axes fraction",
     fontsize=10,

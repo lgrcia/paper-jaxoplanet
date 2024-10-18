@@ -7,10 +7,10 @@ Ns = np.logspace(2, 5, 8).astype(int)
 radius = 0.1
 u = (1.0,1.0)
 
-rule all:
-    input:
-        "figures/speed_vs_order.pdf",
-        "figures/speed_vs_N.pdf"
+# rule all:
+#     input:
+#         "figures/speed_vs_order.pdf",
+#         "figures/speed_vs_N.pdf"
 
 
 rule flux_starry:
@@ -43,13 +43,13 @@ rule flux_jaxoplanet:
 
 rule plot_error_vs_order:
     input:
-        starry_quadratic = "data/flux_starry_quadratic_10000_{radius}.npz",
-        jaxoplanet_quadratic = [f"data/flux_jaxoplanet_quadratic_10000_{order}_{radius}.npz" for order in orders],
-        jaxoplanet_quadratic_gpu = [f"static/gpu/flux_jaxoplanet_quadratic_10000_{order}_{radius}.npz" for order in orders],
-        exoplanet_quadratic = "data/flux_exoplanet_quadratic_10000_{radius}.npz",
-        starry_l20 = "data/flux_starry_l20_10000_{radius}.npz",
-        jaxoplanet_l20 = [f"data/flux_jaxoplanet_l20_10000_{order}_{radius}.npz" for order in orders],
-        jaxoplanet_l20_gpu = [f"static/gpu/flux_jaxoplanet_l20_10000_{order}_{radius}.npz" for order in orders]
+        starry_quadratic = f"data/flux_starry_None_10000_{radius}.npz",
+        jaxoplanet_quadratic = [f"data/flux_jaxoplanet_None_10000_{order}_{radius}.npz" for order in orders],
+        jaxoplanet_quadratic_gpu = [f"{static_gpu}/flux_jaxoplanet_None_10000_{order}_{radius}.npz" for order in orders],
+        exoplanet_quadratic = f"data/flux_exoplanet_10000_{radius}.npz",
+        starry_lmax = f"data/flux_starry_{l_max}_10000_{radius}.npz",
+        jaxoplanet_lmax = [f"data/flux_jaxoplanet_{l_max}_10000_{order}_{radius}.npz" for order in orders],
+        jaxoplanet_lmax_gpu = [f"{static_gpu}/flux_jaxoplanet_{l_max}_10000_{order}_{radius}.npz" for order in orders]
     output:
         "figures/speed_vs_order.pdf"
     params:
@@ -58,7 +58,7 @@ rule plot_error_vs_order:
         "scripts/plot_error_vs_order.py"
 
 fixed_order_quad = 100
-fix_order_l20 = 200
+fix_order_lmax = 200
 
 rule flux_all_single_b:
     params:
@@ -73,16 +73,16 @@ rule plot_error_vs_N:
     input:
         starry_quadratic = [f"data/flux_starry_None_{N}_{radius}.npz" for N in Ns],
         jaxoplanet_quadratic = [f"data/flux_jaxoplanet_None_{N}_{fixed_order_quad}_{radius}.npz" for N in Ns],
-        jaxoplanet_quadratic_gpu = [f"static/gpu/flux_jaxoplanet_quadratic_{N}_{fixed_order_quad}_{radius}.npz" for N in Ns],
+        jaxoplanet_quadratic_gpu = [f"{static_gpu}/flux_jaxoplanet_None_{N}_{fixed_order_quad}_{radius}.npz" for N in Ns],
         exoplanet_quadratic = [f"data/flux_exoplanet_{N}_{radius}.npz" for N in Ns],
-        starry_l20 = [f"data/flux_starry_20_{N}_{radius}.npz" for N in Ns],
-        jaxoplanet_l20 = [f"data/flux_jaxoplanet_20_{N}_{fix_order_l20}_{radius}.npz" for N in Ns],
-        jaxoplanet_l20_gpu = [f"static/gpu/flux_jaxoplanet_20_{N}_{fix_order_l20}_{radius}.npz" for N in Ns]
+        starry_lmax = [f"data/flux_starry_{l_max}_{N}_{radius}.npz" for N in Ns],
+        jaxoplanet_lmax = [f"data/flux_jaxoplanet_{l_max}_{N}_{fix_order_lmax}_{radius}.npz" for N in Ns],
+        jaxoplanet_lmax_gpu = [f"{static_gpu}/flux_jaxoplanet_{l_max}_{N}_{fix_order_lmax}_{radius}.npz" for N in Ns]
     output:
         "figures/speed_vs_N.pdf"
     params:
         Ns=Ns,
-        order_l20=fix_order_l20,
+        order_lmax=fix_order_lmax,
         order_quad=fixed_order_quad
     script:
         "scripts/plot_speed_vs_N.py"
@@ -94,16 +94,16 @@ hd_order = 10
 rule plot_error_vs_N_realistic:
     input:
         jaxoplanet_quadratic = [f"data/flux_jaxoplanet_None_{N}_{trappist_order}_{trappist_radius}.npz" for N in Ns],
-        jaxoplanet_quadratic_gpu = [f"static/gpu_single_core/flux_jaxoplanet_None_{N}_{trappist_order}_{trappist_radius}.npz" for N in Ns],
+        jaxoplanet_quadratic_gpu = [f"{static_gpu}/flux_jaxoplanet_None_{N}_{trappist_order}_{trappist_radius}.npz" for N in Ns],
         exoplanet_quadratic = [f"data/flux_exoplanet_{N}_{trappist_radius}.npz" for N in Ns],
         starry_l3 = [f"data/flux_starry_3_{N}_{trappist_radius}.npz" for N in Ns],
         jaxoplanet_l3 = [f"data/flux_jaxoplanet_3_{N}_{hd_order}_{trappist_radius}.npz" for N in Ns],
-        jaxoplanet_l3_gpu = [f"static/gpu_single_core/flux_jaxoplanet_3_{N}_{hd_order}_{trappist_radius}.npz" for N in Ns]
+        jaxoplanet_l3_gpu = [f"{static_gpu}/flux_jaxoplanet_3_{N}_{hd_order}_{trappist_radius}.npz" for N in Ns]
     output:
         "figures/speed_vs_N_realistic.pdf"
     params:
         Ns=Ns,
-        order_l20=hd_order,
+        order_l3=hd_order,
         order_quad=trappist_order
     script:
         "scripts/plot_speed_vs_N_realistic.py"
