@@ -2,7 +2,8 @@ import jax
 
 jax.config.update("jax_enable_x64", True)
 import jaxoplanet.starry as jerry
-
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import matplotlib
 
 font = {"family": "serif", "size": 12, "serif": "cmr10"}
@@ -65,6 +66,9 @@ format(ax)
 plt.tight_layout()
 plt.savefig(snakemake.output[0])
 
+
+###############
+
 from scipy.spatial.transform import Rotation
 import numpy as np
 
@@ -86,6 +90,7 @@ def plot_lines(lines, ax, pts: int = 100, **kwargs):
     kwargs.setdefault("c", kwargs.pop("color", "0.8"))
     kwargs.setdefault("lw", kwargs.pop("linewidth", 1))
     kwargs.setdefault("alpha", 1.0)
+    kwargs.setdefault("zorder", 0)
 
     jerry.utils.plot_lines(lines[0], ax=ax, **kwargs)
     jerry.utils.plot_lines(lines[1], ax=ax, **kwargs)
@@ -94,16 +99,6 @@ def plot_lines(lines, ax, pts: int = 100, **kwargs):
 
 
 pi2 = "\pi/2"
-
-rotations = (
-    ([1.0, 0.0, 0.0], 0.5 * np.pi, f"${pi2}$"),
-    ([0.0, 0.0, 1.0], theta, r"$\{\theta\}$"),
-    ([1.0, 0.0, 0.0], -0.5 * np.pi, f"$-{pi2}$"),
-    ([0.0, 0.0, 1.0], obl, "$obl$"),
-    ([-np.cos(obl), -np.sin(obl), 0.0], -inc, "$inc - \pi/2$"),
-    ([0, 0, 1.0], -theta_z, r"$\{\theta_z\}$"),
-    ([0, 0, 1.0], -theta_z, "$\\theta_z$"),
-)
 
 
 def plot_vector(u, l=0.3, c="k"):
@@ -125,76 +120,18 @@ def plot_vector(u, l=0.3, c="k"):
         )
 
 
-import matplotlib.pyplot as plt
-from matplotlib.gridspec import GridSpec
-
-
-plt.figure(figsize=(8, 2))
-axes = GridSpec(1, len(rotations), wspace=0.0, hspace=0.0)
-ax = plt.subplot(axes[0])
-
-
-def plot_angles(axes, rotations):
-
+def plot_sphere(ax, u, angle):
     lines = jerry.utils.lon_lat_lines(n=4)
-    lines = rotate_lines(lines, [1.0, 0.0, 0.0], -np.pi / 2)
-
-    for i, (u, angle, text) in enumerate(rotations):
-
-        special = i in [2, 6]
-
-        # plt.plot([0.0, 0.0], [-1.0, 1.0], color="0.8", lw=0.5, zorder=0)
-        # plt.axhline(0, color="0.8", lw=0.5, zorder=0)
-        ax = plt.subplot(axes[i])
-        plot_lines(
-            lines,
-            ax,
-        )
-        lines = rotate_lines(lines, u, angle)
-        ax.set_aspect("equal")
-        ax.axis("off")
-        ax.set_xlim(-1.45, 1.45)
-        ax.set_ylim(-1.45, 1.45)
-
-        x = 1.3
-
-        if i != 0:
-            text = rotations[i - 1][2]
-            u = rotations[i - 1][0]
-            ax.text(
-                0.5,
-                1.1,
-                text,
-                transform=ax.transAxes,
-                ha="center",
-                va="center",
-                fontsize=13,
-            )
-            plot_vector(u)
-            plt.text(-0, -x, f"{i}", fontsize=12, color="0.7", va="top", ha="center")
-
-        else:
-            h = 0.08
-            l = 0.3
-            plt.arrow(-x, -x, 0.0, l, head_width=h, head_length=h, color="0.8")
-            plt.arrow(-x, -x, l, 0.0, head_width=h, head_length=h, color="0.8")
-
-            letter = dict(fontsize=12, color="0.8")
-            plt.text(-x + 1.8 * l, -x, r"$x$", ha="left", va="center", **letter)
-            plt.text(-x, -x + 1.8 * l, r"$y$", ha="center", va="bottom", **letter)
-
-        if i == len(rotations) - 2:
-            # add disk
-            disk = plt.Circle(planet, 0.25, color="0.8")
-            ax.add_artist(disk)
-        if i == len(rotations) - 1:
-            disk = plt.Circle((0, 1), 0.25, color="0.8")
-            ax.add_artist(disk)
-
-
-plot_angles(axes, rotations)
-plt.tight_layout()
-plt.savefig(snakemake.output[1])
+    lines = rotate_lines(lines, u, angle)
+    plot_lines(
+        lines,
+        ax,
+    )
+    lines = rotate_lines(lines, u, angle)
+    ax.set_aspect("equal")
+    ax.axis("off")
+    ax.set_xlim(-1.45, 1.45)
+    ax.set_ylim(-1.45, 1.45)
 
 
 def axis_angle(inc, obl):
@@ -219,6 +156,101 @@ def axis_angle(inc, obl):
     return axis, angle
 
 
+##############
+
+import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
+
+
+rotations = (
+    ([1.0, 0.0, 0.0], 0.5 * np.pi, f"${pi2}$"),
+    ([0.0, 0.0, 1.0], theta, r"$\{\theta\}$"),
+    ([1.0, 0.0, 0.0], -0.5 * np.pi, f"$-{pi2}$"),
+    ([0.0, 0.0, 1.0], obl, "$obl$"),
+    ([-np.cos(obl), -np.sin(obl), 0.0], -inc, "$inc - \pi/2$"),
+    ([0, 0, 1.0], -theta_z, r"$\{\theta_z\}$"),
+    ([0, 0, 1.0], -theta_z, "$\\theta_z$"),
+)
+
+
+plt.figure(figsize=(8, 2))
+axes = GridSpec(1, len(rotations), wspace=0.0, hspace=0.0)
+
+lines = jerry.utils.lon_lat_lines(n=4)
+lines = rotate_lines(lines, [1.0, 0.0, 0.0], -np.pi / 2)
+
+for i, (u, angle, text) in enumerate(rotations):
+    ax = plt.subplot(axes[i])
+    plot_lines(
+        lines,
+        ax,
+    )
+    lines = rotate_lines(lines, u, angle)
+    ax.set_aspect("equal")
+    ax.axis("off")
+    ax.set_xlim(-1.45, 1.45)
+    ax.set_ylim(-1.45, 1.45)
+
+    if i == 0:
+        h = 0.08
+        l = 0.3
+        x = 1.4
+        plt.arrow(-x, -x, 0.0, l, head_width=h, head_length=h, color="0.8")
+        plt.arrow(-x, -x, l, 0.0, head_width=h, head_length=h, color="0.8")
+
+        letter = dict(fontsize=12, color="0.8")
+        plt.text(-x + 1.8 * l, -x, r"$x$", ha="left", va="center", **letter)
+        plt.text(-x, -x + 1.8 * l, r"$y$", ha="center", va="bottom", **letter)
+
+    if i == len(rotations) - 2:
+        # add disk
+        disk = plt.Circle(planet, 0.25, color="0.8")
+        ax.add_artist(disk)
+    if i == len(rotations) - 1:
+        disk = plt.Circle((0, 1), 0.25, color="0.8")
+        ax.add_artist(disk)
+
+    if i < 6:
+        plt.text(-0.0, -1.4, f"{i+1}", fontsize=12, color="k", va="top", ha="center")
+        text = rotations[i][2]
+        ax.text(
+            0.5,
+            1.1,
+            text,
+            transform=ax.transAxes,
+            ha="center",
+            va="center",
+            fontsize=13,
+        )
+
+    lw = 0.8
+    style = "Simple, tail_width=0, head_width=4, head_length=4"
+    kw = dict(arrowstyle=style, color="k", lw=lw)
+    if i == 0:
+        plt.arrow(
+            0.0, 1.1, 0.0, -2.2, head_width=0.15, head_length=0.15, color="k", lw=lw
+        )
+    elif i == 1 or i == 3 or i == 5:
+        arrow = patches.FancyArrowPatch(
+            (1.2, 0), (0, 1.2), connectionstyle=f"arc3,rad=.4", **kw
+        )
+        plt.gca().add_patch(arrow)
+    elif i == 4:
+        arrow = patches.FancyArrowPatch(
+            (-0.8, 0.9), (0.2, 0.3), connectionstyle=f"arc3,rad=-0.4", **kw
+        )
+        plt.gca().add_patch(arrow)
+    if i == 2:
+        plt.arrow(
+            0.0, -1.1, 0.0, 2.2, head_width=0.15, head_length=0.15, color="k", lw=lw
+        )
+
+
+plt.tight_layout()
+plt.tight_layout()
+plt.savefig(snakemake.output[1])
+
+###################
 v, angle = axis_angle(inc, obl)
 
 rotations = (
@@ -228,16 +260,74 @@ rotations = (
     ([0, 0, 1.0], -theta_z, r"$\{\theta_z\}$"),
     ([0, 0, 1.0], -theta_z, "$\\theta_z$"),
 )
-import matplotlib.pyplot as plt
-from matplotlib.gridspec import GridSpec
-
+lines = jerry.utils.lon_lat_lines(n=4)
+lines = rotate_lines(lines, [1.0, 0.0, 0.0], -np.pi / 2)
 
 plt.figure(figsize=(8, 2))
 axes = GridSpec(1, len(rotations), wspace=0.0, hspace=0.0)
-ax = plt.subplot(axes[0])
 
 
-plot_angles(axes, rotations)
+for i, (u, angle, text) in enumerate(rotations):
+    ax = plt.subplot(axes[i])
+    plot_lines(
+        lines,
+        ax,
+    )
+    lines = rotate_lines(lines, u, angle)
+    ax.set_aspect("equal")
+    ax.axis("off")
+    ax.set_xlim(-1.45, 1.45)
+    ax.set_ylim(-1.45, 1.45)
+
+    if i == len(rotations) - 2:
+        # add disk
+        disk = plt.Circle(planet, 0.25, color="0.8")
+        ax.add_artist(disk)
+    if i == len(rotations) - 1:
+        disk = plt.Circle((0, 1), 0.25, color="0.8")
+        ax.add_artist(disk)
+
+    if i == 0:
+        h = 0.08
+        l = 0.3
+        x = 1.4
+        plt.arrow(-x, -x, 0.0, l, head_width=h, head_length=h, color="0.8")
+        plt.arrow(-x, -x, l, 0.0, head_width=h, head_length=h, color="0.8")
+
+        letter = dict(fontsize=12, color="0.8")
+        plt.text(-x + 1.8 * l, -x, r"$x$", ha="left", va="center", **letter)
+        plt.text(-x, -x + 1.8 * l, r"$y$", ha="center", va="bottom", **letter)
+
+    if i < 4:
+        plt.text(-0.0, -1.4, f"{i+1}", fontsize=12, color="k", va="top", ha="center")
+        text = rotations[i][2]
+        ax.text(
+            0.5,
+            1.1,
+            text,
+            transform=ax.transAxes,
+            ha="center",
+            va="center",
+            fontsize=13,
+        )
+
+    lw = 0.8
+    style = "Simple, tail_width=0, head_width=4, head_length=4"
+    kw = dict(arrowstyle=style, color="k", lw=lw)
+    if i == 0:
+        plt.arrow(
+            0.0, 1.1, 0.0, -2.2, head_width=0.15, head_length=0.15, color="k", lw=lw
+        )
+    elif i == 1 or i == 3 or i == 5:
+        arrow = patches.FancyArrowPatch(
+            (1.2, 0), (0, 1.2), connectionstyle=f"arc3,rad=.4", **kw
+        )
+        plt.gca().add_patch(arrow)
+    elif i == 2:
+        arrow = patches.FancyArrowPatch(
+            (0.2, 0.3), (-0.8, 0.9), connectionstyle=f"arc3,rad=0.4", **kw
+        )
+        plt.gca().add_patch(arrow)
 
 plt.tight_layout()
 plt.savefig(snakemake.output[2])

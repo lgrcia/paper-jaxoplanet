@@ -7,6 +7,9 @@ Ns = np.logspace(2, 5, 8).astype(int)
 radius = 0.1
 u = (1.0,1.0)
 
+static_gpu = "static/gpu_single_core"
+l_max = 3
+
 # rule all:
 #     input:
 #         "figures/speed_vs_order.pdf",
