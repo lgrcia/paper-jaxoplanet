@@ -1,4 +1,4 @@
-# jaxoplanet paper
+# jaxoplanet paper - [PDF](https://raw.githubusercontent.com/lgrcia/paper-jaxoplanet/main/latex/jaxoplanet_draft_20241017.pdf)
 This repository contains the code and data for the technical paper of [jaxoplanet](https://github.com/exoplanet-dev/jaxoplanet).
 
 > [!IMPORTANT] 
